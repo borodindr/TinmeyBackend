@@ -7,7 +7,7 @@ import Vapor
 public func configure(_ app: Application) throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-
+    
     app.databases.use(.postgres(
         hostname: Environment.get("DATABASE_HOST") ?? "localhost",
         port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? PostgresConfiguration.ianaPortNumber,
@@ -15,13 +15,17 @@ public func configure(_ app: Application) throws {
         password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
         database: Environment.get("DATABASE_NAME") ?? "vapor_database"
     ), as: .psql)
-
-    app.migrations.add(CreateTodo())
-
-    app.views.use(.leaf)
-
     
-
+//    app.migrations.add(CreateBookCover())
+    app.migrations.add(CreateWork())
+//    app.migrations.add(CreateWorkImage())
+    app.logger.logLevel = .debug
+    try app.autoMigrate().wait()
+    
+    app.views.use(.leaf)
+    
+    
+    
     // register routes
     try routes(app)
 }

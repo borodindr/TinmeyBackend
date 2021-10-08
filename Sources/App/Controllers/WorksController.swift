@@ -94,17 +94,23 @@ struct WorksController: RouteCollection {
     func deleteHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
-            .flatMap { workToDelete in
-                workToDelete.delete(on: req.db)
+            .flatMap { workToDelete -> EventLoopFuture<[Work]> in
+                let imageNames = [workToDelete.firstImageName,
+                                  workToDelete.secondImageName].compactMap { $0 }
+                return workToDelete.delete(on: req.db)
                     .flatMap { _ in
-                        Work.query(on: req.db)
+                        imageNames.forEach { imageName in
+                            let path = req.application.directory.workingDirectory + imageFolder + imageName
+                            try? FileManager.default.removeItem(atPath: path)
+                        }
+                        return Work.query(on: req.db)
                             .filter(\.$sortIndex > workToDelete.sortIndex)
                             .all()
                     }
-                    .flatMapEach(on: req.eventLoop) { workToUpdate in
-                        workToUpdate.sortIndex -= 1
-                        return workToUpdate.save(on: req.db)
-                    }
+            }
+            .flatMapEach(on: req.eventLoop) { workToUpdate in
+                workToUpdate.sortIndex -= 1
+                return workToUpdate.save(on: req.db)
             }
             .transform(to: .noContent)
     }

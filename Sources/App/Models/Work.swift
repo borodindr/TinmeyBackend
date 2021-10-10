@@ -77,7 +77,7 @@ final class Work: Model, Content {
 }
 
 extension Work {
-    enum LayoutType: String, Codable, Hashable {
+    enum LayoutType: String, Content {
         static var name = "work_layout"
         
         case leftBody
@@ -87,7 +87,7 @@ extension Work {
         case rightLargeBody
     }
     
-    enum WorkType: String, Codable, Hashable {
+    enum WorkType: String, Content {
         static var name = "work_type"
         
         case cover

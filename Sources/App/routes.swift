@@ -10,4 +10,7 @@ func routes(_ app: Application) throws {
     
     let profileController = ProfileController()
     try app.register(collection: profileController)
+    
+    let sectionsController = SectionsController()
+    try app.register(collection: sectionsController)
 }

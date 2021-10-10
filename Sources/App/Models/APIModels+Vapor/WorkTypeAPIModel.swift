@@ -8,7 +8,7 @@
 import Foundation
 import TinmeyCore
 
-extension WorkTypeAPIModel {
+extension WorkAPIModel.WorkType {
     var forSchema: Work.WorkType {
         switch self {
         case .cover:

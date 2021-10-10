@@ -55,7 +55,7 @@ extension WorkAPIModel.Create {
 }
 
 extension Work.LayoutType {
-    var asAPIModel: WorkAPIModel.LayoutTypeAPIModel {
+    var asAPIModel: WorkAPIModel.LayoutType {
         switch self {
         case .leftBody:
             return .leftBody

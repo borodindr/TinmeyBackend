@@ -10,9 +10,7 @@ import Vapor
 import Fluent
 import TinmeyCore
 
-//typealias WorkLayoutType = WorkAPIModel.LayoutTypeAPIModel
-//
-extension WorkAPIModel.LayoutTypeAPIModel {
+extension WorkAPIModel.LayoutType {
     var forSchema: Work.LayoutType {
         switch self {
         case .leftBody:

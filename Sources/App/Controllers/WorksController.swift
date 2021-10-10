@@ -70,7 +70,7 @@ struct WorksController: RouteCollection {
         let data = try req.content.decode(WorkAPIModel.Create.self)
         
         return Work.query(on: req.db)
-            .filter(\.$type == data.type)
+            .filter(\.$type == data.type.forSchema)
             .sort(\.$sortIndex, .descending)
             .first()
             .map { lastWork in
@@ -119,7 +119,7 @@ struct WorksController: RouteCollection {
         return Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
             .flatMap { work in
-                work.type = updatedWorkData.type
+                work.type = updatedWorkData.type.forSchema
                 work.title = updatedWorkData.title
                 work.description = updatedWorkData.description
                 return work.save(on: req.db)
@@ -257,9 +257,9 @@ private extension WorksController {
 }
 
 private extension WorksController {
-    func workType(from req: Request) throws -> WorkType {
+    func workType(from req: Request) throws -> Work.WorkType {
         guard let typeKey = req.query[String.self, at: "type"],
-              let type = WorkType(rawValue: typeKey) else {
+              let type = Work.WorkType(rawValue: typeKey) else {
             throw Abort(.badRequest, reason: "Work type should be passed as query parameter: 'type={typeKey}'")
         }
         return type

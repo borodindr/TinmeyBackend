@@ -33,7 +33,7 @@ final class Work: Model, Content {
     var description: String
     
     @Enum(key: "layout")
-    var layout: WorkLayoutType
+    var layout: LayoutType
     
     @OptionalField(key: "first_image_name")
     var firstImageName: String?
@@ -57,7 +57,7 @@ final class Work: Model, Content {
         type: WorkType,
         title: String,
         description: String,
-        layout: WorkLayoutType,
+        layout: LayoutType,
         firstImageName: String? = nil,
         secondImageName: String? = nil,
         seeMoreLink: String?
@@ -76,8 +76,21 @@ final class Work: Model, Content {
     }
 }
 
-
-
-struct Input {
-    var file: File
+extension Work {
+    enum LayoutType: String, Codable, Hashable {
+        static var name = "work_layout"
+        
+        case leftBody
+        case middleBody
+        case rightBody
+        case leftLargeBody
+        case rightLargeBody
+    }
+    
+    enum WorkType: String, Codable, Hashable {
+        static var name = "work_type"
+        
+        case cover
+        case layout
+    }
 }

@@ -8,8 +8,13 @@
 import Foundation
 import TinmeyCore
 
-typealias WorkType = WorkTypeAPIModel
-
-extension WorkType {
-    static var name = "work_type"
+extension WorkTypeAPIModel {
+    var forSchema: Work.WorkType {
+        switch self {
+        case .cover:
+            return .cover
+        case .layout:
+            return .layout
+        }
+    }
 }

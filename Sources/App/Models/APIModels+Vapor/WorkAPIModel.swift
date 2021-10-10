@@ -35,7 +35,7 @@ extension WorkAPIModel {
             updatedAt: work.$updatedAt.orThrow(),
             title: work.title,
             description: work.description,
-            layout: work.layout,
+            layout: work.layout.asAPIModel,
             seeMoreLink: seeMoreLink
         )
     }
@@ -45,11 +45,28 @@ extension WorkAPIModel.Create {
     func makeWork(sortIndex: Int) -> Work {
         Work(
             sortIndex: sortIndex,
-            type: type,
+            type: type.forSchema,
             title: title,
             description: description,
-            layout: layout,
+            layout: layout.forSchema,
             seeMoreLink: seeMoreLink?.absoluteString
         )
+    }
+}
+
+extension Work.LayoutType {
+    var asAPIModel: WorkAPIModel.LayoutTypeAPIModel {
+        switch self {
+        case .leftBody:
+            return .leftBody
+        case .middleBody:
+            return .middleBody
+        case .rightBody:
+            return .rightBody
+        case .leftLargeBody:
+            return .leftLargeBody
+        case .rightLargeBody:
+            return .rightLargeBody
+        }
     }
 }

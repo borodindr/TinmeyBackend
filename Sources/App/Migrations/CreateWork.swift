@@ -10,18 +10,18 @@ import Fluent
 struct CreateWork: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         database
-            .enum(WorkType.name)
-            .case(WorkType.cover.rawValue)
-            .case(WorkType.layout.rawValue)
+            .enum(Work.WorkType.name)
+            .case(Work.WorkType.cover.rawValue)
+            .case(Work.WorkType.layout.rawValue)
             .create()
             .flatMap { workType in
                 database
-                    .enum(WorkLayoutType.name)
-                    .case(WorkLayoutType.leftBody.rawValue)
-                    .case(WorkLayoutType.middleBody.rawValue)
-                    .case(WorkLayoutType.rightBody.rawValue)
-                    .case(WorkLayoutType.leftLargeBody.rawValue)
-                    .case(WorkLayoutType.rightLargeBody.rawValue)
+                    .enum(Work.LayoutType.name)
+                    .case(Work.LayoutType.leftBody.rawValue)
+                    .case(Work.LayoutType.middleBody.rawValue)
+                    .case(Work.LayoutType.rightBody.rawValue)
+                    .case(Work.LayoutType.leftLargeBody.rawValue)
+                    .case(Work.LayoutType.rightLargeBody.rawValue)
                     .create()
                     .flatMap { workLayoutType in
                         database.schema(Work.schema)

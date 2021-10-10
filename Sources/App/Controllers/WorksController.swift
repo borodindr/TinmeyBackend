@@ -7,8 +7,6 @@
 
 import Vapor
 import Fluent
-import FluentSQL
-import FluentPostgresDriver
 import TinmeyCore
 
 struct WorksController: RouteCollection {

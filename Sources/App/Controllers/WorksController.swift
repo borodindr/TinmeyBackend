@@ -12,19 +12,6 @@ import TinmeyCore
 struct WorksController: RouteCollection {
     let imageFolder = "WorkImages/"
     
-    enum ImageType: String, CaseIterable {
-        case firstImage, secondImage
-        
-        var description: String {
-            switch self {
-            case .firstImage:
-                return "first image"
-            case .secondImage:
-                return "second image"
-            }
-        }
-    }
-    
     func boot(routes: RoutesBuilder) throws {
         let worksRoutes = routes.grouped("api", "works")
         worksRoutes.get(use: getAllHandler)
@@ -189,11 +176,7 @@ struct WorksController: RouteCollection {
     
     func addImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<HTTPStatus> {
         let data = try req.content.decode(ImageUploadData.self)
-        
-        guard let fileExtension = data.picture.extension,
-              ["png", "jpg", "jpeg"].contains(fileExtension.lowercased()) else {
-            return req.eventLoop.future(error: Abort(.badRequest, reason: "File extension should be png, jpg or jpeg"))
-        }
+        let fileExtension = try data.validExtension()
         
         return Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
@@ -281,8 +264,4 @@ private extension WorksController {
         }
         return imageName
     }
-}
-
-struct ImageUploadData: Content {
-    var picture: File
 }

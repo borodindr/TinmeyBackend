@@ -13,6 +13,7 @@ struct SectionsController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let sectionsGroup = routes.grouped("api", "sections")
         sectionsGroup.get(":sectionType", use: getHandler)
+        sectionsGroup.put(":sectionType", use: updateHandler)
     }
     
     func getHandler(_ req: Request) throws -> EventLoopFuture<SectionAPIModel> {
@@ -23,6 +24,23 @@ struct SectionsController: RouteCollection {
             .first()
             .unwrap(or: Abort(.notFound))
             .map { SectionAPIModel($0) }
+    }
+    
+    func updateHandler(_ req: Request) throws -> EventLoopFuture<SectionAPIModel> {
+        let updatedSection = try req.content.decode(SectionAPIModel.self)
+        let sectionType = try sectionType(from: req)
+        
+        return Section.query(on: req.db)
+            .filter(\.$type == sectionType)
+            .first()
+            .unwrap(or: Abort(.notFound))
+            .flatMap { section in
+                section.previewTitle = updatedSection.preview.title
+                section.previewSubtitle = updatedSection.preview.subtitle
+                
+                return section.save(on: req.db)
+                    .map { SectionAPIModel(section) }
+            }
     }
 }
 

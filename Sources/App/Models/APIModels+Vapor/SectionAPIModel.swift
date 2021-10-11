@@ -36,3 +36,16 @@ extension Section.SectionType {
         }
     }
 }
+
+extension SectionAPIModel.SectionType {
+    var forSchema: Section.SectionType {
+        switch self {
+        case .covers:
+            return .covers
+        case .layouts:
+            return .layouts
+        case .about:
+            return .about
+        }
+    }
+}

@@ -1,41 +1,46 @@
 #for(item in items):
+<div class="row">
+    <div class="vline"></div>
 #if(item.layout == "leftBody"):
-<div class="row outlined">
     #extend("bodyBoxItem")
+    <div class="vline"></div>
     #extend("firstImageBoxItem")
+    <div class="vline"></div>
     #extend("secondImageBoxItem")
-</div>
 
 #elseif(item.layout == "middleBody"):
-<div class="row outlined">
     #extend("firstImageBoxItem")
+    <div class="vline"></div>
     #extend("bodyBoxItem")
+    <div class="vline"></div>
     #extend("secondImageBoxItem")
-</div>
 
 #elseif(item.layout == "rightBody"):
-<div class="row outlined">
     #extend("firstImageBoxItem")
+    <div class="vline"></div>
     #extend("secondImageBoxItem")
+    <div class="vline"></div>
     #extend("bodyBoxItem")
-</div>
 
 #elseif(item.layout == "leftLargeBody"):
-<div class="row outlined">
     #extend("bodyBoxItem")
+    <div class="vline empty"></div>
     <div class="box">
         <div></div>
     </div>
+    <div class="vline"></div>
     #extend("firstImageBoxItem")
-</div>
 
 #elseif(item.layout == "rightLargeBody"):
-<div class="row outlined">
     #extend("firstImageBoxItem")
+    <div class="vline"></div>
     #extend("bodyBoxItem")
+    <div class="vline clear"></div>
     <div class="box">
         <div></div>
     </div>
-</div>
 #endif
+<div class="vline"></div>
+</div>
+<div class="hline"></div>
 #endfor

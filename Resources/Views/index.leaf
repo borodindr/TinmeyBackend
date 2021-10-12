@@ -1,6 +1,5 @@
 #extend("base"):
 #export("content"):
 #extend("items")
-
 #endexport
 #endextend

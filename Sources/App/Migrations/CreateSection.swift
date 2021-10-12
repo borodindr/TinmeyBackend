@@ -20,6 +20,7 @@ struct CreateSection: Migration {
                 database
                     .schema("sections")
                     .id()
+                    .field("sort_index", .int, .required)
                     .field("type", sectionType, .required)
                     .field("preview_title", .string, .required)
                     .field("preview_subtitle", .string, .required)

@@ -1,0 +1,41 @@
+#for(item in items):
+#if(item.layout == "leftBody"):
+<div class="row outlined">
+    #extend("bodyBoxItem")
+    #extend("firstImageBoxItem")
+    #extend("secondImageBoxItem")
+</div>
+
+#elseif(item.layout == "middleBody"):
+<div class="row outlined">
+    #extend("firstImageBoxItem")
+    #extend("bodyBoxItem")
+    #extend("secondImageBoxItem")
+</div>
+
+#elseif(item.layout == "rightBody"):
+<div class="row outlined">
+    #extend("firstImageBoxItem")
+    #extend("secondImageBoxItem")
+    #extend("bodyBoxItem")
+</div>
+
+#elseif(item.layout == "leftLargeBody"):
+<div class="row outlined">
+    #extend("bodyBoxItem")
+    <div class="box">
+        <div></div>
+    </div>
+    #extend("firstImageBoxItem")
+</div>
+
+#elseif(item.layout == "rightLargeBody"):
+<div class="row outlined">
+    #extend("firstImageBoxItem")
+    #extend("bodyBoxItem")
+    <div class="box">
+        <div></div>
+    </div>
+</div>
+#endif
+#endfor

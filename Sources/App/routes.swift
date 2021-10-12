@@ -2,15 +2,9 @@ import Fluent
 import Vapor
 
 func routes(_ app: Application) throws {
-    let worksController = WorksController()
-    try app.register(collection: worksController)
-    
-    let usersController = UsersController()
-    try app.register(collection: usersController)
-    
-    let profileController = ProfileController()
-    try app.register(collection: profileController)
-    
-    let sectionsController = SectionsController()
-    try app.register(collection: sectionsController)
+    try app.register(collection: WorksController())
+    try app.register(collection: UsersController())
+    try app.register(collection: ProfileController())
+    try app.register(collection: SectionsController())
+    try app.register(collection: WebsiteController())
 }

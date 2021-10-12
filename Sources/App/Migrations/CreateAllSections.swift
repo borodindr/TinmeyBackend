@@ -11,18 +11,21 @@ import Vapor
 struct CreateAllSections: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         let coversSection = Section(
+            sortIndex: 0,
             type: .covers,
             previewTitle: "Book covers",
             previewSubtitle: "Check out my works done using different design techniques."
         )
         let layoutsSection = Section(
+            sortIndex: 1,
             type: .layouts,
             previewTitle: "Book layouts",
             previewSubtitle: "My passion is to create beautiful layouts so that the reader enjoys the book on every spread."
         )
         let aboutSection = Section(
+            sortIndex: 2,
             type: .about,
-            previewTitle: "Book covers",
+            previewTitle: "About",
             previewSubtitle: "Created in 2019–2021 for Russian book market."
         )
         

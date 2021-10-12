@@ -94,3 +94,5 @@ extension Work {
         case layout
     }
 }
+
+extension Work: TwoImagesContainer { }

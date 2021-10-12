@@ -16,12 +16,17 @@ struct WorksController: RouteCollection {
         let worksRoutes = routes.grouped("api", "works")
         worksRoutes.get(use: getAllHandler)
         worksRoutes.get(":workID", use: getHandler)
-        worksRoutes.post(use: createHandler)
-        worksRoutes.delete(":workID", use: deleteHandler)
-        worksRoutes.put(":workID", use: updateHandler)
-        worksRoutes.put(":workID", "reorder", ":direction", use: reorderHandler)
+        
+        let tokenAuthMiddleware = Token.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let tokenAuthGroup = worksRoutes.grouped(tokenAuthMiddleware, guardAuthMiddleware)
+        
+        tokenAuthGroup.post(use: createHandler)
+        tokenAuthGroup.delete(":workID", use: deleteHandler)
+        tokenAuthGroup.put(":workID", use: updateHandler)
+        tokenAuthGroup.put(":workID", "reorder", ":direction", use: reorderHandler)
         ImageType.allCases.forEach { imageType in
-            worksRoutes.on(.POST, ":workID", "\(imageType.rawValue)", body: .collect(maxSize: "10mb"), use: {
+            tokenAuthGroup.on(.POST, ":workID", "\(imageType.rawValue)", body: .collect(maxSize: "10mb"), use: {
                 try addImageHandler($0, imageType: imageType)
             })
             worksRoutes.get(":workID", "\(imageType.rawValue)", use: {
@@ -106,9 +111,11 @@ struct WorksController: RouteCollection {
         return Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
             .flatMap { work in
+                work.layout = updatedWorkData.layout.forSchema
                 work.type = updatedWorkData.type.forSchema
                 work.title = updatedWorkData.title
                 work.description = updatedWorkData.description
+                work.seeMoreLink = updatedWorkData.seeMoreLink?.absoluteString
                 return work.save(on: req.db)
                     .flatMapThrowing {
                         try WorkAPIModel(work)
@@ -212,7 +219,7 @@ struct WorksController: RouteCollection {
         return Work.find(workID, on: req.db)
             .unwrap(or: Abort(.notFound, reason: "Work with ID \(workID) not found."))
             .flatMapThrowing { work in
-                try imageName(for: imageType, from: work)
+                try imageType.imageName(in: work)
             }
             .map { imageName in
                 let path = req.application.directory.workingDirectory + imageFolder + imageName
@@ -246,22 +253,5 @@ private extension WorksController {
             throw Abort(.badRequest, reason: "Work type should be passed as query parameter: 'type={typeKey}'")
         }
         return type
-    }
-    
-    func imageName(for imageType: ImageType, from work: Work) throws -> String {
-        let name: String?
-        switch imageType {
-        case .firstImage:
-            name = work.firstImageName
-        case .secondImage:
-            name = work.secondImageName
-        }
-        
-        guard let imageName = name else {
-            let reason = "Work has no \(imageType.description)."
-            let error = Abort(.notFound, reason: reason)
-            throw error
-        }
-        return imageName
     }
 }

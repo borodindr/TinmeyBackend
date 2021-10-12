@@ -14,6 +14,9 @@ final class Section: Model, Content {
     @ID
     var id: UUID?
     
+    @Field(key: "sort_index")
+    var sortIndex: Int
+    
     @Enum(key: "type")
     var type: SectionType
     
@@ -33,6 +36,7 @@ final class Section: Model, Content {
     
     init(
         id: UUID? = nil,
+        sortIndex: Int,
         type: SectionType,
         previewTitle: String,
         previewSubtitle: String,
@@ -40,6 +44,7 @@ final class Section: Model, Content {
         secondImageName: String? = nil
     ) {
         self.id = id
+        self.sortIndex = sortIndex
         self.type = type
         self.previewTitle = previewTitle
         self.previewSubtitle = previewSubtitle
@@ -53,5 +58,16 @@ extension Section {
         case covers
         case layouts
         case about
+        
+        static func detect(from req: Request) throws -> SectionType {
+            guard let sectionTypeRawValue = req.parameters.get("sectionType"),
+                  let sectionType = SectionType(rawValue: sectionTypeRawValue) else {
+                throw Abort(.badRequest, reason: "Wrong section type")
+            }
+            
+            return sectionType
+        }
     }
 }
+
+extension Section: TwoImagesContainer { }

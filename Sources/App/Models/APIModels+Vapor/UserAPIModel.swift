@@ -10,6 +10,7 @@ import Vapor
 
 extension UserAPIModel: Content { }
 extension UserAPIModel.LoginResult: Content { }
+extension UserAPIModel.ChangePassword: Content { }
 
 extension UserAPIModel {
     init(_ user: User) throws {

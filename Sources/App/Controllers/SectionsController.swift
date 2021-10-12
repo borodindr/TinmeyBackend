@@ -32,7 +32,7 @@ struct SectionsController: RouteCollection {
     }
     
     func getHandler(_ req: Request) throws -> EventLoopFuture<SectionAPIModel> {
-        let sectionType = try sectionType(from: req)
+        let sectionType = try Section.SectionType.detect(from: req)
         
         return Section.query(on: req.db)
             .filter(\.$type == sectionType)
@@ -43,7 +43,7 @@ struct SectionsController: RouteCollection {
     
     func updateHandler(_ req: Request) throws -> EventLoopFuture<SectionAPIModel> {
         let updatedSection = try req.content.decode(SectionAPIModel.self)
-        let sectionType = try sectionType(from: req)
+        let sectionType = try Section.SectionType.detect(from: req)
         
         return Section.query(on: req.db)
             .filter(\.$type == sectionType)
@@ -59,7 +59,7 @@ struct SectionsController: RouteCollection {
     }
     
     func addImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<HTTPStatus> {
-        let sectionType = try sectionType(from: req)
+        let sectionType = try Section.SectionType.detect(from: req)
         let data = try req.content.decode(ImageUploadData.self)
         let fileExtension = try data.validExtension()
         
@@ -87,14 +87,14 @@ struct SectionsController: RouteCollection {
     }
     
     func downloadImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<Response> {
-        let sectionType = try sectionType(from: req)
+        let sectionType = try Section.SectionType.detect(from: req)
         
         return Section.query(on: req.db)
             .filter(\.$type == sectionType)
             .first()
             .unwrap(or: Abort(.notFound))
             .flatMapThrowing { section in
-                try imageName(for: imageType, from: section)
+                try imageType.imageName(in: section)
             }
             .map { imageName in
                 let path = req.application.directory.workingDirectory + imageFolder + imageName
@@ -118,32 +118,4 @@ private extension SectionsController {
         return req.fileio.streamFile(at: path)
     }
     
-}
-
-private extension SectionsController {
-    func sectionType(from req: Request) throws -> Section.SectionType {
-        guard let sectionRawValue = req.parameters.get("sectionType"),
-              let section = Section.SectionType(rawValue: sectionRawValue) else {
-            throw Abort(.badRequest, reason: "Wrong section type")
-        }
-        
-        return section
-    }
-    
-    func imageName(for imageType: ImageType, from section: Section) throws -> String {
-        let name: String?
-        switch imageType {
-        case .firstImage:
-            name = section.firstImageName
-        case .secondImage:
-            name = section.secondImageName
-        }
-        
-        guard let imageName = name else {
-            let reason = "Section has no \(imageType.description)."
-            let error = Abort(.notFound, reason: reason)
-            throw error
-        }
-        return imageName
-    }
 }

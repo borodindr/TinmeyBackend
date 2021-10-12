@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="og:site_name" content="tinmey design" />
+        <link rel="canonical" href="https://your-website-url.com" />
+        <meta name="twitter:url" content="https://your-website-url.com" />
+        <meta name="og:url" content="https://your-website-url.com" />
+        <title>Ekaterina Tinmey | tinmey design</title>
+        <meta name="twitter:title" content="Ekaterina Tinmey | tinmey design" />
+        <meta name="og:title" content="Ekaterina Tinmey | tinmey design" />
+        <meta name="description" content="Graphic designer specialising in book design." />
+        <meta name="twitter:description" content="Graphic designer specialising in book design." />
+        <meta name="og:description" content="Graphic designer specialising in book design." />
+        <meta name="twitter:card" content="summary" />
+        <link rel="stylesheet" href="/styles/style.css" type="text/css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!--        <link rel="icon" href="/favicon-16.png" sizes="16x16" />-->
+<!--        <link rel="icon" href="/favicon-32.png" sizes="32x32" />-->
+<!--        <link rel="icon" href="/favicon-128.png" sizes="128x128" />-->
+<!--        <link rel="icon" href="/favicon-152.png" sizes="152x152" />-->
+<!--        <link rel="icon" href="/favicon-180.png" sizes="180x180" />-->
+<!--        <link rel="icon" href="/favicon-192.png" sizes="192x192" />-->
+<!--        <link rel="icon" href="/favicon-196.png" sizes="196x196" />-->
+    </head>
+    
+    <body>
+        <div class="wrapper">
+            <header class="main-nav"><a href="/" class="title">tinmey design</a>
+                <nav>
+                    <ul>
+                        <li><a href="/covers">book covers</a></li>
+                        <li><a href="/layouts">book layouts</a></li>
+                        <li><a href="/about">about</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+        <div class="wrapper">
+            <header>
+                <div class="row outlined">
+                    #extend("header")
+                </div>
+            </header>
+        </div>
+        <div class="wrapper">
+            #import("content")
+        </div>
+        <footer>
+            <p>© 2021 tinmey design</p>
+            <p>Developed by <a href="https://www.dmitry-borodin.com" target="_blank">Dmitry
+                Borodin</a></p>
+        </footer>
+    </body>
+    
+</html>

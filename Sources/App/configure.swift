@@ -19,6 +19,8 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateUser())
     app.migrations.add(CreateProfile())
     app.migrations.add(CreateWork())
+    app.migrations.add(CreateTag())
+    app.migrations.add(CreateWorkTagPivot())
     app.migrations.add(CreateToken())
     app.migrations.add(CreateMainUser())
     app.migrations.add(CreateSection())
@@ -28,8 +30,6 @@ public func configure(_ app: Application) throws {
     try app.autoMigrate().wait()
     
     app.views.use(.leaf)
-    
-    
     
     // register routes
     try routes(app)

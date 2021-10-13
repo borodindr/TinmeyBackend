@@ -44,7 +44,9 @@ final class Work: Model, Content {
     @OptionalField(key: "see_more_link")
     var seeMoreLink: String?
     
-    // tags
+    @Siblings(through: WorkTagPivot.self, from: \.$work, to: \.$tag)
+    var tags: [Tag]
+    
     // comments
     
     init() { }

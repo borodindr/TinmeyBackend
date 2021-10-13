@@ -12,6 +12,7 @@ struct CreateTag: Migration {
         database.schema("tags")
             .id()
             .field("name", .string, .required)
+            .unique(on: "name")
             .create()
     }
     

@@ -7,4 +7,5 @@ func routes(_ app: Application) throws {
     try app.register(collection: ProfileController())
     try app.register(collection: SectionsController())
     try app.register(collection: WebsiteController())
+    try app.register(collection: TagsController())
 }

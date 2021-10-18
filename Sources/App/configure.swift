@@ -22,7 +22,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateTag())
     app.migrations.add(CreateWorkTagPivot())
     app.migrations.add(CreateToken())
-    app.migrations.add(CreateMainUser())
+    app.migrations.add(CreateMainUser(environment: app.environment))
     app.migrations.add(CreateSection())
     app.migrations.add(CreateAllSections())
     

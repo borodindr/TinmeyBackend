@@ -36,7 +36,8 @@ extension WorkAPIModel {
             title: work.title,
             description: work.description,
             layout: work.layout.asAPIModel,
-            seeMoreLink: seeMoreLink
+            seeMoreLink: seeMoreLink,
+            tags: work.tags.map { $0.name }
         )
     }
 }

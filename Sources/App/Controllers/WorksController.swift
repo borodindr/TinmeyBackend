@@ -41,7 +41,7 @@ struct WorksController: RouteCollection {
     
     func getAllHandler(_ req: Request) throws -> EventLoopFuture<[WorkAPIModel]> {
         let type = try workType(from: req)
-        return Work.query(on: req.db)
+        return Work.query(on: req.db).with(\.$tags)
             .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .all()
@@ -51,7 +51,7 @@ struct WorksController: RouteCollection {
     }
     
     func getHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        Work.find(req.parameters.get("workID"), on: req.db)
+        Work.find(req.parameters.get("workID"), on: req.db)//.with(\.$tags)
             .unwrap(or: Abort(.notFound))
             .flatMapThrowing { work in
                 try WorkAPIModel(work)
@@ -62,6 +62,7 @@ struct WorksController: RouteCollection {
         let data = try req.content.decode(WorkAPIModel.Create.self)
         
         return Work.query(on: req.db)
+            .with(\.$tags)
             .filter(\.$type == data.type.forSchema)
             .sort(\.$sortIndex, .descending)
             .first()
@@ -75,6 +76,13 @@ struct WorksController: RouteCollection {
             .map { data.makeWork(sortIndex: $0) }
             .flatMap { newWork in
                 newWork.save(on: req.db)
+                    .map { newWork }
+            }
+            .flatMap { newWork in
+                Tag.addTags(data.tags, to: newWork, on: req)
+                    .flatMap {
+                        newWork.$tags.load(on: req.db)
+                    }
                     .flatMapThrowing {
                         try WorkAPIModel(newWork)
                     }
@@ -117,6 +125,12 @@ struct WorksController: RouteCollection {
                 work.description = updatedWorkData.description
                 work.seeMoreLink = updatedWorkData.seeMoreLink?.absoluteString
                 return work.save(on: req.db)
+                    .flatMap {
+                        Tag.updateTags(to: updatedWorkData.tags, in: work, on: req)
+                    }
+                    .flatMap {
+                        work.$tags.load(on: req.db)
+                    }
                     .flatMapThrowing {
                         try WorkAPIModel(work)
                     }

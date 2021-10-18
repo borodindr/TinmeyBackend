@@ -9,9 +9,11 @@ import Fluent
 import Vapor
 
 struct CreateMainUser: Migration {
+    let environment: Environment
+    
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         let username = "e.tinmey"
-        let password = Data([UInt8].random(count: 32)).base32EncodedString()
+        let password = generatePassword()
         let passwordHash: String
         do {
             passwordHash = try Bcrypt.hash(password)
@@ -46,6 +48,14 @@ struct CreateMainUser: Migration {
         User.query(on: database)
             .filter(\User.$isMain == true)
             .delete()
+    }
+    
+    private func generatePassword() -> String {
+        if environment == .development {
+            return "admin"
+        } else {
+            return Data([UInt8].random(count: 32)).base32EncodedString()
+        }
     }
     
     private func newUserLogMessage(username: String, password: String) -> Logger.Message {

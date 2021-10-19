@@ -10,7 +10,7 @@ import Fluent
 import TinmeyCore
 
 struct WorksController: RouteCollection {
-    let imageFolder = "WorkImages/"
+    let imageFolder = "WorkImages"
     
     func boot(routes: RoutesBuilder) throws {
         let worksRoutes = routes.grouped("api", "works")
@@ -51,7 +51,7 @@ struct WorksController: RouteCollection {
     }
     
     func getHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        Work.find(req.parameters.get("workID"), on: req.db)//.with(\.$tags)
+        Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
             .flatMapThrowing { work in
                 try WorkAPIModel(work)
@@ -96,12 +96,11 @@ struct WorksController: RouteCollection {
                 let imageNames = [workToDelete.firstImageName,
                                   workToDelete.secondImageName].compactMap { $0 }
                 return workToDelete.delete(on: req.db)
-                    .flatMap { _ in
-                        imageNames.forEach { imageName in
-                            let path = req.application.directory.workingDirectory + imageFolder + imageName
-                            try? FileManager.default.removeItem(atPath: path)
-                        }
-                        return Work.query(on: req.db)
+                    .flatMap {
+                        req.aws.s3.delete(imageNames, at: imageFolder)
+                    }
+                    .flatMap {
+                        Work.query(on: req.db)
                             .filter(\.$sortIndex > workToDelete.sortIndex)
                             .all()
                     }
@@ -199,6 +198,7 @@ struct WorksController: RouteCollection {
         let data = try req.content.decode(ImageUploadData.self)
         let fileExtension = try data.validExtension()
         
+        
         return Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
             .flatMap { work in
@@ -209,11 +209,8 @@ struct WorksController: RouteCollection {
                     return req.eventLoop.future(error: error)
                 }
                 let name = "Work-(\(workID))-\(imageType.rawValue).\(fileExtension)"
-                let path = req.application.directory.workingDirectory + imageFolder + name
-                
-                return req.fileio
-                    .writeFile(data.picture.data, at: path)
-                    .flatMap {
+                return req.aws.s3.upload(data.picture.data, named: name, at: imageFolder)
+                    .flatMap { _ in
                         switch imageType {
                         case .firstImage:
                             work.firstImageName = name
@@ -235,9 +232,8 @@ struct WorksController: RouteCollection {
             .flatMapThrowing { work in
                 try imageType.imageName(in: work)
             }
-            .map { imageName in
-                let path = req.application.directory.workingDirectory + imageFolder + imageName
-                return req.fileio.streamFile(at: path)
+            .flatMap { imageName in
+                req.aws.s3.download(imageName, at: imageFolder)
             }
     }
     
@@ -254,7 +250,7 @@ private extension WorksController {
     
     func downloadPreviewImage(_ imageType: ImageType, req: Request) -> Response {
         let imageName = "Work-(PREVIEW)-\(imageType.rawValue).png"
-        let path = req.application.directory.workingDirectory + imageFolder + imageName
+        let path = req.application.directory.workingDirectory + imageFolder + "/" + imageName
         return req.fileio.streamFile(at: path)
     }
     

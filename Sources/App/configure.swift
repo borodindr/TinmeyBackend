@@ -2,6 +2,7 @@ import Fluent
 import FluentPostgresDriver
 import Leaf
 import Vapor
+import SotoS3
 
 // configures your application
 public func configure(_ app: Application) throws {
@@ -15,6 +16,10 @@ public func configure(_ app: Application) throws {
         password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
         database: Environment.get("DATABASE_NAME") ?? "vapor_database"
     ), as: .psql)
+    
+    let awsClient = AWSClient(httpClientProvider: .shared(app.http.client.shared))
+    app.aws.client = awsClient
+    app.aws.s3 = S3(client: awsClient, region: .uswest1)
     
     app.migrations.add(CreateUser())
     app.migrations.add(CreateProfile())

@@ -9,8 +9,8 @@ import Vapor
 import Fluent
 
 struct WebsiteController: RouteCollection {
-    let sectionsImageFolder = "SectionImages/"
-    let worksImageFolder = "WorkImages/"
+    let sectionsImageFolder = "SectionImages"
+    let worksImageFolder = "WorkImages"
     
     func boot(routes: RoutesBuilder) throws {
         routes.get(use: indexHandler)
@@ -84,27 +84,21 @@ struct WebsiteController: RouteCollection {
             .flatMapThrowing { section in
                 try imageType.imageName(in: section)
             }
-            .map { imageName in
-                let path = req.application.directory.workingDirectory + sectionsImageFolder + imageName
-                return req.fileio.streamFile(at: path)
+            .flatMap { imageName in
+                req.aws.s3.download(imageName, at: sectionsImageFolder)
             }
     }
     
     func getWorkImageHandler(_ req: Request) throws -> EventLoopFuture<Response> {
-//        let workID = try User.re
         let imageType = try ImageType.detect(from: req)
         
         return Work.find(req.parameters.get("workID"), on: req.db)
-//        return Section.query(on: req.db)
-//            .filter(\.$type == sectionType)
-//            .first()
             .unwrap(or: Abort(.notFound))
             .flatMapThrowing { work in
                 try imageType.imageName(in: work)
             }
-            .map { imageName in
-                let path = req.application.directory.workingDirectory + worksImageFolder + imageName
-                return req.fileio.streamFile(at: path)
+            .flatMap { imageName in
+                req.aws.s3.download(imageName, at: worksImageFolder)
             }
     }
     

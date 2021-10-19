@@ -10,7 +10,7 @@ import Fluent
 import TinmeyCore
 
 struct SectionsController: RouteCollection {
-    let imageFolder = "SectionImages/"
+    let imageFolder = "SectionImages"
     
     func boot(routes: RoutesBuilder) throws {
         let sectionsGroup = routes.grouped("api", "sections")
@@ -69,10 +69,7 @@ struct SectionsController: RouteCollection {
             .unwrap(or: Abort(.notFound))
             .flatMap { section in
                 let name = "Section-\(section.type.rawValue)-\(imageType.rawValue).\(fileExtension)"
-                let path = req.application.directory.workingDirectory + imageFolder + name
-                
-                return req.fileio
-                    .writeFile(data.picture.data, at: path)
+                return req.aws.s3.upload(data.picture.data, named: name, at: imageFolder)
                     .flatMap {
                         switch imageType {
                         case .firstImage:
@@ -81,9 +78,9 @@ struct SectionsController: RouteCollection {
                             section.secondImageName = name
                         }
                         return section.save(on: req.db)
-                            .map { .created }
                     }
             }
+            .map { .created }
     }
     
     func downloadImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<Response> {
@@ -96,9 +93,8 @@ struct SectionsController: RouteCollection {
             .flatMapThrowing { section in
                 try imageType.imageName(in: section)
             }
-            .map { imageName in
-                let path = req.application.directory.workingDirectory + imageFolder + imageName
-                return req.fileio.streamFile(at: path)
+            .flatMap { imageName in
+                req.aws.s3.download(imageName, at: imageFolder)
             }
     }
 }
@@ -114,7 +110,7 @@ private extension SectionsController {
     
     func downloadPreviewImage(_ imageType: ImageType, req: Request) -> Response {
         let imageName = "Section-(PREVIEW)-\(imageType.rawValue).png"
-        let path = req.application.directory.workingDirectory + imageFolder + imageName
+        let path = req.application.directory.workingDirectory + imageFolder + "/" + imageName
         return req.fileio.streamFile(at: path)
     }
     

@@ -12,7 +12,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0"),
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
-        .package(name: "AWSSDKSwift", url: "https://github.com/swift-aws/aws-sdk-swift.git", from: "4.7.0"),
+        .package(url: "https://github.com/soto-project/soto.git", from: "5.0.0"),
         .package(url: "https://github.com/borodindr/TinmeyCore.git", .branch("master"))// from: "0.0.2"),
     ],
     targets: [
@@ -23,7 +23,9 @@ let package = Package(
                 .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver"),
                 .product(name: "Leaf", package: "leaf"),
                 .product(name: "Vapor", package: "vapor"),
-                .product(name: "S3", package: "AWSSDKSwift"),
+                .product(name: "SotoS3", package: "soto"),
+                .product(name: "SotoSES", package: "soto"),
+                .product(name: "SotoIAM", package: "soto"),
                 .product(name: "TinmeyCore", package: "TinmeyCore"),
             ],
             swiftSettings: [

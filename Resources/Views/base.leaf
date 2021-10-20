@@ -41,7 +41,7 @@
             <header>
                 <div class="hline"></div>
                 <div class="row">
-                    #extend("header")
+                    #import("header")
                 </div>
                 <div class="hline"></div>
             </header>

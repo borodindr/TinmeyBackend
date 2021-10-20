@@ -27,7 +27,7 @@ struct WebsiteController: RouteCollection {
             .flatMap { sections in
                 getMainProfile(req)
                     .flatMap { profile in
-                        let items = sections.map(PreviewItem.init)
+                        let items = sections.map(SectionItem.init)
                         let header = Header(profile: profile)
                         let context = IndexContext(title: "Home page", header: header, items: items)
                         return req.view.render("index", context)
@@ -36,40 +36,46 @@ struct WebsiteController: RouteCollection {
     }
     
     func coversHandler(_ req: Request) throws -> EventLoopFuture<View> {
-        Work.query(on: req.db)
-            .filter(\.$type == .cover)
-            .sort(\.$sortIndex, .descending)
+        let sectionFuture = Section.query(on: req.db)
+            .filter(\.$type == .covers)
+            .first()
+            .unwrap(or: Abort(.notFound))
+        
+        let tagName = req.query[String.self, at: "tag"]
+        let worksFuture = worksFuture(req, type: .cover, tagName: tagName)
+        
+        let tagsFuture = Tag.query(on: req.db)
             .all()
-            .flatMap { works in
-                return Section.query(on: req.db)
-                    .filter(\.$type == .covers)
-                    .first()
-                    .unwrap(or: Abort(.notFound))
-                    .flatMap { section in
-                        let items = works.map(PreviewItem.init)
-                        let header = Header(section: section)
-                        let context = IndexContext(title: "Home page", header: header, items: items)
-                        return req.view.render("works", context)
-                    }
+        
+        return sectionFuture
+            .and(worksFuture)
+            .and(tagsFuture)
+            .map { (arg0: (section: Section, works: [Work]), tags: [Tag]) in
+                (arg0.section, arg0.works, tags)
+            }
+            .flatMap { (section, works, tags) in
+                let items = works.map(PreviewItem.init)
+                let availableTags = tags.map { $0.name }
+                let header = WorkHeader(section: section, availableTags: availableTags, selectedTag: tagName)
+                let context = WorkContext(title: "Covers", header: header, items: items)
+                return req.view.render("works", context)
             }
     }
     
     func layoutsHandler(_ req: Request) throws -> EventLoopFuture<View> {
-        Work.query(on: req.db)
-            .filter(\.$type == .layout)
-            .sort(\.$sortIndex, .descending)
-            .all()
-            .flatMap { works in
-                return Section.query(on: req.db)
-                    .filter(\.$type == .layouts)
-                    .first()
-                    .unwrap(or: Abort(.notFound))
-                    .flatMap { section in
-                        let items = works.map(PreviewItem.init)
-                        let header = Header(section: section)
-                        let context = IndexContext(title: "Home page", header: header, items: items)
-                        return req.view.render("works", context)
-                    }
+        let sectionFuture = Section.query(on: req.db)
+            .filter(\.$type == .layouts)
+            .first()
+            .unwrap(or: Abort(.notFound))
+        
+        let worksFuture = allWorksFuture(req, type: .layout)
+        
+        return sectionFuture.and(worksFuture)
+            .flatMap { section, works in
+                let items = works.map(PreviewItem.init)
+                let header = WorkHeader(section: section)
+                let context = WorkContext(title: "Layouts", header: header, items: items)
+                return req.view.render("works", context)
             }
     }
     
@@ -122,20 +128,45 @@ struct WebsiteController: RouteCollection {
         }
         return type
     }
+    
+    func worksFuture(_ req: Request, type: Work.WorkType, tagName: String?) -> EventLoopFuture<[Work]> {
+        if let tagName = tagName {
+            return Tag.query(on: req.db)
+                .filter(\.$name == tagName)
+                .first()
+                .unwrap(or: Abort(.notFound))
+                .flatMap { $0.$works.query(on: req.db).with(\.$tags).all() }
+        } else {
+            return allWorksFuture(req, type: type)
+        }
+    }
+    
+    func allWorksFuture(_ req: Request, type: Work.WorkType) -> EventLoopFuture<[Work]> {
+        Work.query(on: req.db).with(\.$tags)
+            .filter(\.$type == type)
+            .sort(\.$sortIndex, .descending)
+            .all()
+    }
 }
 
 struct IndexContext: Encodable {
     let title: String
     let header: Header
+    let items: [SectionItem]
+}
+
+struct WorkContext: Encodable {
+    let title: String
+    let header: WorkHeader
     let items: [PreviewItem]
 }
 
-struct PreviewItem: Encodable {
+struct SectionItem: Encodable {
     let layout: String
     let title: String
     let description: String
-    let buttonDirection: String?
-    let buttonText: String?
+    let buttonDirection: String
+    let buttonText: String
     let firstImageLink: String
     let secondImageLink: String
     
@@ -157,13 +188,21 @@ struct PreviewItem: Encodable {
         self.firstImageLink = "/sections/\(section.type.rawValue)/firstImage"
         self.secondImageLink = "/sections/\(section.type.rawValue)/secondImage"
     }
+}
+
+struct PreviewItem: Encodable {
+    let layout: String
+    let title: String
+    let description: String
+    let tags: [String]
+    let firstImageLink: String
+    let secondImageLink: String
     
     init(work: Work) {
         self.layout = work.layout.rawValue
         self.title = work.title
         self.description = work.description
-        self.buttonDirection = work.seeMoreLink
-        self.buttonText = "See more"
+        self.tags = work.tags.map { $0.name }
         if let id = work.id?.uuidString {
             self.firstImageLink = "/works/\(id)/firstImage"
             self.secondImageLink = "/works/\(id)/secondImage"
@@ -187,11 +226,25 @@ struct Header: Encodable {
         self.status = profile.currentStatus
         self.email = profile.email
     }
+}
+
+struct WorkHeader: Encodable {
+    let title: String
+    let description: String
+    let availableTags: [String]
+    let selectedTag: String?
+    
+    init(section: Section, availableTags: [String], selectedTag: String?) {
+        self.title = section.previewTitle
+        self.description = section.previewSubtitle
+        self.availableTags = availableTags
+        self.selectedTag = selectedTag
+    }
     
     init(section: Section) {
         self.title = section.previewTitle
         self.description = section.previewSubtitle
-        self.status = nil
-        self.email = nil
+        self.availableTags = []
+        self.selectedTag = nil
     }
 }

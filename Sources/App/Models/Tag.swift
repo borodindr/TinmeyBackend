@@ -89,7 +89,5 @@ extension Tag {
                  addTags(tagsToAdd, to: work, on: req)]
                     .flatten(on: req.eventLoop)
             }
-        
-        
     }
 }

@@ -1,5 +1,15 @@
 #extend("base"):
-#export("content"):
-#extend("items")
-#endexport
+
+	#export("header"):
+		#extend("indexHeader")
+	#endexport
+
+	#export("content"):
+		#extend("items"):
+		#export("bodyBoxItem"):
+			#extend("sectionBodyBoxItem")
+		#endexport
+		#endextend
+	#endexport
+
 #endextend

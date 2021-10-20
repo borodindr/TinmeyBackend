@@ -1,0 +1,11 @@
+<div class="box">
+    <div class="content">
+        <div>
+            <p class="box-title">#(item.title)</p>
+            <p class="box-description">#(item.description)</p>
+        </div>
+        <div>
+            <a href="#(item.buttonDirection)" class="box-button">#(item.buttonText)</a>
+        </div>
+    </div>
+</div>

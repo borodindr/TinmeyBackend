@@ -17,7 +17,6 @@ struct TagsController: RouteCollection {
     
     func getAllHandler(_ req: Request) -> EventLoopFuture<[String]> {
         Tag.query(on: req.db).all()
-//            .flatMapEachThrowing(TagAPIModel.init)
             .mapEach { $0.name }
     }
 }

@@ -92,22 +92,44 @@ struct WorksController: RouteCollection {
     func deleteHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
-            .flatMap { workToDelete -> EventLoopFuture<[Work]> in
+            .flatMap { work in
+                // Load tags to find those with empty works after delete
+                work.$tags.load(on: req.db)
+                    .map { work }
+            }
+            .flatMap { workToDelete -> EventLoopFuture<Void> in
                 let imageNames = [workToDelete.firstImageName,
                                   workToDelete.secondImageName].compactMap { $0 }
+                let tags = workToDelete.tags
                 return workToDelete.delete(on: req.db)
+                    .map { tags }
+                    .flatMapEach(on: req.eventLoop) { tag in
+                        // Load works to find empty
+                        tag.$works.load(on: req.db)
+                            .map { tag }
+                    }
+                    .mapEachCompact { tag in
+                        // pass only empty works tag
+                        tag.works.isEmpty ? tag : nil
+                    }
+                    .flatMapEach(on: req.eventLoop) { tagToDelete in
+                        tagToDelete.delete(on: req.db)
+                    }
+                
                     .flatMap {
+                        // Delete images from storage
                         req.aws.s3.delete(imageNames, at: imageFolder)
                     }
                     .flatMap {
+                        // Reorder other works
                         Work.query(on: req.db)
                             .filter(\.$sortIndex > workToDelete.sortIndex)
                             .all()
+                            .flatMapEach(on: req.eventLoop) { workToUpdate in
+                                workToUpdate.sortIndex -= 1
+                                return workToUpdate.save(on: req.db)
+                            }
                     }
-            }
-            .flatMapEach(on: req.eventLoop) { workToUpdate in
-                workToUpdate.sortIndex -= 1
-                return workToUpdate.save(on: req.db)
             }
             .transform(to: .noContent)
     }

@@ -49,6 +49,9 @@ extension S3 {
 // MARK: - Delete
 extension S3 {
     func delete(_ fileNames: [String], at pathComponents: String...) -> EventLoopFuture<Void> {
+        guard !fileNames.isEmpty else {
+            return eventLoopGroup.next().makeSucceededVoidFuture()
+        }
         let objects = fileNames
             .map { objectRequestKey(for: $0, at: pathComponents) }
             .map { ObjectIdentifier(key: $0) }

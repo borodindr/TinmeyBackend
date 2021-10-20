@@ -15,10 +15,15 @@ struct SectionsController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let sectionsGroup = routes.grouped("api", "sections")
         sectionsGroup.get(":sectionType", use: getHandler)
-        sectionsGroup.put(":sectionType", use: updateHandler)
+        
+        let tokenAuthMiddleware = Token.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let tokenAuthGroup = sectionsGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
+        
+        tokenAuthGroup.put(":sectionType", use: updateHandler)
         
         ImageType.allCases.forEach { imageType in
-            sectionsGroup.on(.POST, ":sectionType", "\(imageType.rawValue)", body: .collect(maxSize: "10mb"), use: {
+            tokenAuthGroup.on(.POST, ":sectionType", "\(imageType.rawValue)", body: .collect(maxSize: "10mb"), use: {
                 try addImageHandler($0, imageType: imageType)
             })
             sectionsGroup.get(":sectionType", "\(imageType.rawValue)", use: {

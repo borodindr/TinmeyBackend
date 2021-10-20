@@ -13,7 +13,12 @@ struct ProfileController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let usersRoutes = routes.grouped("api", "profile")
         usersRoutes.get(use: getHandler)
-        usersRoutes.put(use: updateHandler)
+        
+        let tokenAuthMiddleware = Token.authenticator()
+        let guardAuthMiddleware = User.guardMiddleware()
+        let tokenAuthGroup = usersRoutes.grouped(tokenAuthMiddleware, guardAuthMiddleware)
+        
+        tokenAuthGroup.put(use: updateHandler)
     }
     
     func getHandler(_ req: Request) throws -> EventLoopFuture<ProfileAPIModel> {

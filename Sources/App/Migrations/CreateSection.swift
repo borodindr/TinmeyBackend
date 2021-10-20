@@ -24,6 +24,7 @@ struct CreateSection: Migration {
                     .field("type", sectionType, .required)
                     .field("preview_title", .string, .required)
                     .field("preview_subtitle", .string, .required)
+                    .field("section_subtitle", .string, .required)
                     .field("first_image_name", .string)
                     .field("second_image_name", .string)
                     .create()

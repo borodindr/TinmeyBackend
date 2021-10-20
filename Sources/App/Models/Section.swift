@@ -26,6 +26,9 @@ final class Section: Model, Content {
     @Field(key: "preview_subtitle")
     var previewSubtitle: String
     
+    @Field(key: "section_subtitle")
+    var sectionSubtitle: String
+    
     @OptionalField(key: "first_image_name")
     var firstImageName: String?
     
@@ -40,6 +43,7 @@ final class Section: Model, Content {
         type: SectionType,
         previewTitle: String,
         previewSubtitle: String,
+        sectionSubtitle: String,
         firstImageName: String? = nil,
         secondImageName: String? = nil
     ) {
@@ -48,6 +52,7 @@ final class Section: Model, Content {
         self.type = type
         self.previewTitle = previewTitle
         self.previewSubtitle = previewSubtitle
+        self.sectionSubtitle = sectionSubtitle
         self.firstImageName = firstImageName
         self.secondImageName = secondImageName
     }

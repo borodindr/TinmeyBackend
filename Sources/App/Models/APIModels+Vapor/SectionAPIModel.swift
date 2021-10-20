@@ -16,6 +16,7 @@ extension SectionAPIModel {
     init(_ section: Section) {
         self.init(
             type: section.type.asAPIModel,
+            subtitle: section.sectionSubtitle,
             preview: Preview(
                 title: section.previewTitle,
                 subtitle: section.previewSubtitle

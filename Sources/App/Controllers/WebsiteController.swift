@@ -236,15 +236,12 @@ struct WorkHeader: Encodable {
     
     init(section: Section, availableTags: [String], selectedTag: String?) {
         self.title = section.previewTitle
-        self.description = section.previewSubtitle
+        self.description = section.sectionSubtitle
         self.availableTags = availableTags
         self.selectedTag = selectedTag
     }
     
     init(section: Section) {
-        self.title = section.previewTitle
-        self.description = section.previewSubtitle
-        self.availableTags = []
-        self.selectedTag = nil
+        self.init(section: section, availableTags: [], selectedTag: nil)
     }
 }

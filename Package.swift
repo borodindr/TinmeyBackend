@@ -13,7 +13,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "5.0.0"),
-        .package(url: "https://github.com/borodindr/TinmeyCore.git", .branch("master"))// from: "0.0.2"),
+        .package(url: "https://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:x-oauth-basic@github.com/borodindr/TinmeyCore.git", .branch("master"))// from: "0.0.2"),
     ],
     targets: [
         .target(

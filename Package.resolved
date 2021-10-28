@@ -228,10 +228,10 @@
       },
       {
         "package": "TinmeyCore",
-        "repositoryURL": "https://github.com/borodindr/TinmeyCore.git",
+        "repositoryURL": "https://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:x-oauth-basic@github.com/borodindr/TinmeyCore.git",
         "state": {
           "branch": "master",
-          "revision": "628244cbcbc556fe472d8dcc18c70bbcd50484d3",
+          "revision": "aee476fe51d66329d229b446f5166e6c81b6503b",
           "version": null
         }
       },

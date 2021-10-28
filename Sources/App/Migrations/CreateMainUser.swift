@@ -40,7 +40,7 @@ struct CreateMainUser: Migration {
             .flatMap { $0.save(on: database) }
             .map {
                 let message = newUserLogMessage(username: username, password: password)
-                database.logger.info(message)
+                database.logger.debug(message)
             }
     }
     

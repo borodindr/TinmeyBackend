@@ -8,6 +8,7 @@ import SotoS3
 public func configure(_ app: Application) throws {
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    app.middleware.use(SSLMiddleware(enabled: true))
     
     let databaseName: String
     let databasePort: Int

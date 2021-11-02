@@ -9,18 +9,22 @@ public func configure(_ app: Application) throws {
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     
+    if let portEnv = Environment.get("PORT"), let port = Int(portEnv) {
+        app.http.server.configuration.port = port
+    }
+    
     let databaseName: String
     let databasePort: Int
     if (app.environment == .testing) {
-      databaseName = "vapor-test"
-      if let testPort = Environment.get("DATABASE_PORT") {
-        databasePort = Int(testPort) ?? 5433
-      } else {
-        databasePort = 5433
-      }
+        databaseName = "vapor-test"
+        if let testPort = Environment.get("DATABASE_PORT") {
+            databasePort = Int(testPort) ?? 5433
+        } else {
+            databasePort = 5433
+        }
     } else {
-      databaseName = "vapor_database"
-      databasePort = 5432
+        databaseName = "vapor_database"
+        databasePort = 5432
     }
     
     if var config = Environment.get("DATABASE_URL")

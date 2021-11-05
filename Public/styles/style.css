@@ -37,8 +37,13 @@ a:hover {
     text-align: left;
 }
 
+.white-bg {
+    background-color: white;
+}
+
 .main-nav {
     overflow: hidden;
+    height:  60px;
     padding: 20px;
     display: flex;
     flex-direction: column;

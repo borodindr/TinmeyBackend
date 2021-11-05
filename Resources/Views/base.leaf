@@ -26,15 +26,24 @@
     </head>
     
     <body>
-        <div class="wrapper">
-            <header class="main-nav"><a href="/" class="title">tinmey design</a>
-                <nav>
-                    <ul>
-                        <li><a href="/covers">book covers</a></li>
-                        <li><a href="/layouts">book layouts</a></li>
-                    </ul>
-                </nav>
-            </header>
+        <div class="white-bg">
+            <div class="wrapper">
+                <header class="main-nav">
+                    <nav>
+                        <ul>
+                            <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li>
+                            <li><a href="https://medium.com/@katyatinmey" target="_blank">Medium</a></li>
+                            <li><a href="https://www.instagram.com/tinmeydesign" target="_blank">Instagram</a></li>
+                        </ul>
+                    </nav>
+                    <nav>
+                        <ul>
+                            <li><a href="/covers">Covers</a></li>
+                            <li><a href="/layouts">Layouts</a></li>
+                        </ul>
+                    </nav>
+                </header>
+            </div>
         </div>
         <div class="wrapper">
             <header>

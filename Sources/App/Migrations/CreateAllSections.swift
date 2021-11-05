@@ -24,20 +24,10 @@ struct CreateAllSections: Migration {
             previewSubtitle: "My passion is to create beautiful layouts so that the reader enjoys the book on every spread.",
             sectionSubtitle: "My passion is to create beautiful layouts so that the reader enjoys the book on every spread."
         )
-        let aboutSection = Section(
-            sortIndex: 2,
-            type: .about,
-            previewTitle: "About",
-            previewSubtitle: "Created in 2019–2021 for Russian book market.",
-            sectionSubtitle: "Created in 2019–2021 for Russian book market."
-        )
         
         return coversSection.save(on: database)
             .flatMap {
                 layoutsSection.save(on: database)
-            }
-            .flatMap {
-                aboutSection.save(on: database)
             }
     }
     

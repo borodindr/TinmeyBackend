@@ -32,8 +32,6 @@ extension Section.SectionType {
             return .covers
         case .layouts:
             return .layouts
-        case .about:
-            return .about
         }
     }
 }
@@ -45,8 +43,6 @@ extension SectionAPIModel.SectionType {
             return .covers
         case .layouts:
             return .layouts
-        case .about:
-            return .about
         }
     }
 }

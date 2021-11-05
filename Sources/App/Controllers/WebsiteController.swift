@@ -29,7 +29,12 @@ struct WebsiteController: RouteCollection {
                     .flatMap { profile in
                         let items = sections.map(SectionItem.init)
                         let header = Header(profile: profile)
-                        let context = IndexContext(title: "Home page", header: header, items: items)
+                        let context = IndexContext(
+                            title: "Home page",
+                            header: header,
+                            about: profile.about,
+                            items: items
+                        )
                         return req.view.render("index", context)
                     }
             }
@@ -152,6 +157,7 @@ struct WebsiteController: RouteCollection {
 struct IndexContext: Encodable {
     let title: String
     let header: Header
+    let about: String
     let items: [SectionItem]
 }
 
@@ -178,9 +184,6 @@ struct SectionItem: Encodable {
         case .layouts:
             self.layout = Work.LayoutType.middleBody.rawValue
             self.buttonText = "See layouts"
-        case .about:
-            self.layout = Work.LayoutType.rightLargeBody.rawValue
-            self.buttonText = "Learn more"
         }
         self.title = section.previewTitle
         self.description = section.previewSubtitle

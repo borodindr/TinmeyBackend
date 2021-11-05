@@ -62,7 +62,6 @@ extension Section {
     enum SectionType: String, Content {
         case covers
         case layouts
-        case about
         
         static func detect(from req: Request) throws -> SectionType {
             guard let sectionTypeRawValue = req.parameters.get("sectionType"),

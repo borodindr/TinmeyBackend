@@ -14,7 +14,6 @@ struct CreateSection: Migration {
             .enum("section_type")
             .case(Section.SectionType.covers.rawValue)
             .case(Section.SectionType.layouts.rawValue)
-            .case(Section.SectionType.about.rawValue)
             .create()
             .flatMap { sectionType in
                 database

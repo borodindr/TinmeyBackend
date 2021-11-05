@@ -12,12 +12,16 @@ struct WebsiteController: RouteCollection {
     let sectionsImageFolder = "SectionImages"
     let worksImageFolder = "WorkImages"
     
+    let resumeFolder = "Resume"
+    let resumeName = "Katya_Tinmey-Resume.pdf"
+    
     func boot(routes: RoutesBuilder) throws {
         routes.get(use: indexHandler)
         routes.get("sections", ":sectionType", ":imageType", use: getSectionImageHandler)
         routes.get("covers", use: coversHandler)
         routes.get("layouts", use: layoutsHandler)
         routes.get("works", ":workID", ":imageType", use: getWorkImageHandler)
+        routes.get("download", "resume", use: downloadResumeHandler)
     }
     
     func indexHandler(_ req: Request) -> EventLoopFuture<View> {
@@ -151,6 +155,10 @@ struct WebsiteController: RouteCollection {
             .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .all()
+    }
+    
+    func downloadResumeHandler(_ req: Request) -> EventLoopFuture<Response> {
+        req.aws.s3.download(resumeName, at: resumeFolder)
     }
 }
 

@@ -65,8 +65,8 @@ struct SectionsController: RouteCollection {
     
     func addImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<HTTPStatus> {
         let sectionType = try Section.SectionType.detect(from: req)
-        let data = try req.content.decode(ImageUploadData.self)
-        let fileExtension = try data.validExtension()
+        let data = try req.content.decode(FileUploadData.self)
+        let fileExtension = try data.validImageExtension()
         
         return Section.query(on: req.db)
             .filter(\.$type == sectionType)
@@ -74,7 +74,7 @@ struct SectionsController: RouteCollection {
             .unwrap(or: Abort(.notFound))
             .flatMap { section in
                 let name = "Section-\(section.type.rawValue)-\(imageType.rawValue).\(fileExtension)"
-                return req.aws.s3.upload(data.picture.data, named: name, at: imageFolder)
+                return req.aws.s3.upload(data.file.data, named: name, at: imageFolder)
                     .flatMap {
                         switch imageType {
                         case .firstImage:

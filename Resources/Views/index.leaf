@@ -11,7 +11,7 @@
     			<div class="content">
 	        		<div></div>
 		        	<div>
-		            	<a href="/" class="box-button">Download CV</a>
+		            	<a href="/download/resume" class="box-button">Download CV</a>
 		        	</div>
     			</div>
     		</div>

@@ -34,15 +34,16 @@
                 <header class="main-nav">
                     <nav>
                         <ul>
-                            <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li>
-                            <li><a href="https://medium.com/@katyatinmey" target="_blank">Medium</a></li>
-                            <li><a href="https://www.instagram.com/tinmeydesign" target="_blank">Instagram</a></li>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/covers">Covers</a></li>
+                            <li><a href="/layouts">Layouts</a></li>
                         </ul>
                     </nav>
                     <nav>
                         <ul>
-                            <li><a href="/covers">Covers</a></li>
-                            <li><a href="/layouts">Layouts</a></li>
+                            <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li>
+                            <li><a href="https://medium.com/@katyatinmey" target="_blank">Medium</a></li>
+                            <li><a href="https://www.instagram.com/tinmeydesign" target="_blank">Instagram</a></li>
                         </ul>
                     </nav>
                 </header>

@@ -217,8 +217,8 @@ struct WorksController: RouteCollection {
     }
     
     func addImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<HTTPStatus> {
-        let data = try req.content.decode(ImageUploadData.self)
-        let fileExtension = try data.validExtension()
+        let data = try req.content.decode(FileUploadData.self)
+        let fileExtension = try data.validImageExtension()
         
         
         return Work.find(req.parameters.get("workID"), on: req.db)
@@ -231,7 +231,7 @@ struct WorksController: RouteCollection {
                     return req.eventLoop.future(error: error)
                 }
                 let name = "Work-(\(workID))-\(imageType.rawValue).\(fileExtension)"
-                return req.aws.s3.upload(data.picture.data, named: name, at: imageFolder)
+                return req.aws.s3.upload(data.file.data, named: name, at: imageFolder)
                     .flatMap { _ in
                         switch imageType {
                         case .firstImage:

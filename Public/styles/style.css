@@ -6,14 +6,32 @@
 }
 
 :root {
-    --separator-color: #717171;
-    --separator-width: 1px;
+    /*--Colors--*/
+    /*background colors*/
     --bg-color: #FAB5C9;
-    --box-bg-color: white;
+    --box-bg-color: #FFFFFF;
+    --button-bg-color: #F8DBE4;
+    --separator-color: #717171;
+    --tag-bg-color: #8FE08A;
+    --tag-selected-bg-color: blue;
+    /*text colors*/
     --text-color: #181818;
     --secondary-text-color: #717171;
     --footer-text-color: #8a8a8a;
-    --button-color: #F8DBE4;
+    
+    /*--Font sizes--*/
+
+    /*--Sizes--*/
+    --nav-bar-height: 3.75rem;
+    --nav-bar-padding: 0rem 1.25rem;
+    --separator-width: 1px;
+    --columns-in-row: 3;
+    --box-size: 300px;
+    --wide-box-width: calc(2 * var(--box-size) + var(--separator-width));
+    --row-height: var(--box-size);
+    --row-width: calc(var(--box-size) * var(--columns-in-row) + (var(--columns-in-row) + 1) * var(--separator-width));
+    --box-content-padding: 2.5rem 1.75rem 3.75rem 1.75rem;
+    --wide-box-content-padding: 2.5rem 6.25rem 3.75rem 1.75rem;
 }
 
 body {
@@ -21,7 +39,7 @@ body {
     color: var(--text-color);
     font-family: 'Questrial', Helvetica, Arial, sans-serif;
     text-align: center;
-    min-width: 904px;
+    min-width: var(--row-width);
 }
 
 a {
@@ -34,7 +52,7 @@ a:hover {
 }
 
 .wrapper {
-    max-width: 904px;
+    max-width: var(--row-width);
     margin-left: auto;
     margin-right: auto;
     text-align: left;
@@ -42,92 +60,61 @@ a:hover {
 
 .white-bg {
     background-color: white;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.main-nav {
+nav {
     overflow: hidden;
-    height:  60px;
-    padding: 20px;
+    height: var(--nav-bar-height);
+    padding: var(--nav-bar-padding);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
 }
 
-.main-nav nav {
-    display:inline-block;
-}
-
-.main-nav .title {
-    text-align: center;
-    font-size: 20px;
-    color: var(--text-color);
-}
-
-.main-nav ul {
+nav ul {
     display: block;
     list-style: none;
-    margin: 0;
-    padding: 0;
 }
 
-.main-nav li {
-    float: none;
-    font-size: 15px;
+nav li {
+    float: left;
+    font-size: 1rem;
 }
 
-.main-nav li a {
+nav li a {
     color: var(--text-color);
 }
 
-.main-nav a {
+nav a {
     display: block;
     text-align: center;
     padding: .25rem 1rem;
     text-decoration:none
 }
 
-.main-nav a:focus, .main-nav a:hover {
+nav a:focus, nav a:hover {
     text-decoration: none;
 }
-
-/*@media (min-width: 42rem) {*/
-    .main-nav li {
-        float:left
-    }
-/*}*/
-
-/*@media (min-width: 52rem) {*/
-    .main-nav {
-        flex-direction:row
-    }
-
-    .main-nav .title {
-        margin-bottom:0
-    }
-
-    .main-nav li {
-        float: left;
-        padding-bottom:0
-    }
-/*}*/
 
 .row {
     display: flex;
     justify-content: center;
-    height: 300px;
+    height: var(--row-height);
     background-color: var(--box-bg-color);
 }
 
 .box {
-    width: 300px;
+    width: var(--box-size);
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .wide {
-    width: 601px;
+    width: var(--wide-box-width);
 }
 
 .box img {
@@ -136,7 +123,7 @@ a:hover {
 }
 
 .box .content {
-    padding: 40px 26px 60px 26px;
+    padding: var(--box-content-padding);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -145,32 +132,22 @@ a:hover {
 }
 
 .wide .content {
-    padding-right: 100px;
+    padding: var(--wide-box-content-padding);
 }
 
 .box-about {
-    font-size: 15px;
-    color: var(--text-color);
     white-space: pre-wrap;
 }
 
-.box-title {
-    font-size: 25px;
-}
-
 .box-description {
-    font-size: 15px;
-    color: var(--secondary-text-color);
-    margin-top: 15px;
+    margin-top: 1rem;
 }
 
 .box-button {
-    color: var(--secondary-text-color);
-    font-size: 13px;
     text-decoration: none;
     
-    background-color: var(--button-color);
-    padding: 5px 7px;
+    background-color: var(--button-bg-color);
+    padding: .375rem;
     border-radius: 2.5px;
     display: inline-block;
     border: 0.25px solid var(--secondary-text-color);
@@ -180,19 +157,17 @@ a:hover {
 
 }
 
-.tag {
+[class*="tag"] {
     display: inline-block;
-    font-size: 12px;
-    background-color: #8FE08A;
-    color: var(--text-color);
-    margin-top: 6px;
-    margin-right: 6px;
-    padding: 4px 8px 4px 8px;
+    background-color: var(--tag-bg-color);
+    margin-top: .375rem;
+    margin-right: .375rem;
+    padding: .25rem 0.5rem;
     border-radius: 15px;
 }
 
-.selected-tag {
-    background-color: blue;
+.tag-selected {
+    background-color: var(--tag-selected-bg-color);
 }
 
 .hline {
@@ -211,28 +186,88 @@ a:hover {
     background-color: transparent;
 }
 
-header h1 {
-    font-size: 30px;
-    margin-bottom: 10px;
+h1 {
+    font-size: 1.75rem;
+    color: var(--text-color);
 }
 
-header h2 {
-    font-size: 25px;
+h2 {
+    font-size: 1.5rem;
+    color: var(--text-color);
 }
 
-header .email {
-    font-size: 15px;
+h3 {
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+p {
+    font-size: 1rem;
     color: var(--secondary-text-color);
-    text-decoration: none;
 }
 
-header .location {
-    font-size: 13px;
+.box-button {
     color: var(--secondary-text-color);
+    font-size: 0.75rem;
+}
+
+[class*="tag"] {
+    font-size: 0.75rem;
+    color: var(--text-color);
 }
 
 footer {
+    margin: 1.75rem 0;
+}
+
+footer p {
     color: var(--footer-text-color);
-    font-size: 14px;
-    margin: 40px 0 40px 0;
+    font-size: 0.75rem;
+}
+
+footer a {
+    text-decoration: underline;
+}
+
+.phone-show {
+    display: none;
+}
+
+/*dynemic box size for smaller screens then 3 boxes 300px each*/
+@media (max-width: 904px) {
+    :root {
+        --box-size: calc((100vw - 4px) / 3);
+    }
+
+    html {
+        font-size: calc(100vw / 904 * 16);
+    }
+}
+
+/*phone screen with dynemic two boxes size*/
+@media (max-width: 425px) {
+    :root {
+        --columns-in-row: 2;
+        --box-size: calc((100vw - 3px) / 2);
+    }
+
+    html {
+        font-size: calc(100vw / 425 * 16 * 0.6);
+    }
+
+    .phone-hide {
+        display: none;
+    }
+
+    .phone-collapse {
+        width: var(--box-size);
+    }
+
+    .phone-collapse .content {
+        padding-right: 26px;
+    }
+
+    .phone-show {
+        display: inherit;
+    }
 }

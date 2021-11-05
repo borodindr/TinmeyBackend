@@ -5,27 +5,27 @@
             #import("bodyBoxItem")
             <div class="vline"></div>
             #extend("firstImageBoxItem")
-            <div class="vline"></div>
+            <div class="vline phone-hide"></div>
             #extend("secondImageBoxItem")
 
         #elseif(item.layout == "middleBody"):
             #extend("firstImageBoxItem")
             <div class="vline"></div>
             #import("bodyBoxItem")
-            <div class="vline"></div>
+            <div class="vline phone-hide"></div>
             #extend("secondImageBoxItem")
 
         #elseif(item.layout == "rightBody"):
             #extend("firstImageBoxItem")
-            <div class="vline"></div>
+            <div class="vline phone-hide"></div>
             #extend("secondImageBoxItem")
             <div class="vline"></div>
             #import("bodyBoxItem")
 
         #elseif(item.layout == "leftLargeBody"):
             #import("bodyBoxItem")
-            <div class="vline clear"></div>
-            <div class="box">
+            <div class="vline clear phone-hide"></div>
+            <div class="box phone-hide">
                 <div></div>
             </div>
             <div class="vline"></div>
@@ -35,8 +35,8 @@
             #extend("firstImageBoxItem")
             <div class="vline"></div>
             #import("bodyBoxItem")
-            <div class="vline clear"></div>
-            <div class="box">
+            <div class="vline clear phone-hide"></div>
+            <div class="box phone-hide">
                 <div></div>
             </div>
         #endif

@@ -31,40 +31,35 @@
     <body>
         <div class="white-bg">
             <div class="wrapper">
-                <header class="main-nav">
-                    <nav>
-                        <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/covers">Covers</a></li>
-                            <li><a href="/layouts">Layouts</a></li>
-                        </ul>
-                    </nav>
-                    <nav>
-                        <ul>
-                            <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li>
-                            <li><a href="https://medium.com/@katyatinmey" target="_blank">Medium</a></li>
-                            <li><a href="https://www.instagram.com/tinmeydesign" target="_blank">Instagram</a></li>
-                        </ul>
-                    </nav>
-                </header>
+                <nav>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/covers">Covers</a></li>
+                        <li><a href="/layouts">Layouts</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li>
+                        <li><a href="https://medium.com/@katyatinmey" target="_blank">Medium</a></li>
+                        <li><a href="https://www.instagram.com/tinmeydesign" target="_blank">Instagram</a></li>
+                    </ul>
+                </nav>
             </div>
         </div>
         <div class="wrapper">
-            <header>
+            <!-- <header> -->
                 <div class="hline"></div>
                 <div class="row">
                     #import("header")
                 </div>
                 <div class="hline"></div>
-            </header>
+            <!-- </header> -->
         </div>
         <div class="wrapper">
             #import("content")
         </div>
         <footer>
             <p>© 2021 tinmey design</p>
-            <p>Developed by <a href="https://www.dmitry-borodin.com" target="_blank">Dmitry
-                Borodin</a></p>
+            <p>Developed by <a href="https://www.dmitry-borodin.com" target="_blank">Dmitry Borodin</a></p>
         </footer>
     </body>
     

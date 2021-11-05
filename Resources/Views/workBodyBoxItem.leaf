@@ -1,14 +1,14 @@
 <div class="box">
     <div class="content">
         <div>
-            <p class="box-title">#(item.title)</p>
+            <h2>#(item.title)</h2>
             <p class="box-description">#(item.description)</p>
         </div>
         <div>
-            <ul class="tag-list">
+            <ul>
             #for(tag in item.tags):
             #if(tag == header.selectedTag):
-            <li class="tag selected-tag">
+            <li class="tag tag-selected">
             #else:
             <li class="tag">
             #endif

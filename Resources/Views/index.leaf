@@ -7,7 +7,7 @@
 	#export("content"):
 		<div class="row">
         	<div class="vline"></div>
-        	<div class="box">
+        	<div class="box phone-hide">
     			<div class="content">
 	        		<div></div>
 		        	<div>
@@ -15,12 +15,15 @@
 		        	</div>
     			</div>
     		</div>
-    		<div class="vline"></div>
+    		<div class="vline phone-hide"></div>
 	        <div class="box wide">
 	    		<div class="content">
-		        	<div></div>
+		        	<div class="phone-hide"></div>
 		        	<div>
-		            	<p class="box-about">#(about)</p>
+		            	<h3 class="box-about">#(about)</h3>
+		        	</div>
+		        	<div class="phone-show">
+		        		<a href="/download/resume" class="box-button" target="_blank">Download CV</a>
 		        	</div>
 	    		</div>
 	    	</div>

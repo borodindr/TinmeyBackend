@@ -4,10 +4,10 @@
         <div>
             <h1>#(header.title)</h1>
         </div>
-        <ul class="tag-list">
+        <ul>
             #for(tag in header.availableTags):
             #if(tag == header.selectedTag):
-            <li class="tag selected-tag">
+            <li class="tag-selected">
             #else:
             <li class="tag">
             #endif
@@ -18,7 +18,7 @@
     </div>
 </div>
 <div class="vline"></div>
-<div class="box wide">
+<div class="box wide phone-collapse">
     <div class="content">
         <div>
 

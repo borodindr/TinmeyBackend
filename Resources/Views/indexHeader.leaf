@@ -3,12 +3,9 @@
     <div class="content">
         <div>
             <h1>#(header.title)</h1>
-            #if(header.email):
-            <a href="mailTo: #(header.email)" class="email">#(header.email)</a>
-            #endif
         </div>
-        #if(header.status):
-        <p class="location">#(header.status)</p>
+        #if(header.email):
+        <a href="mailTo: #(header.email)" class="email">#(header.email)</a>
         #endif
     </div>
 </div>

@@ -9,15 +9,15 @@ import Vapor
 import Fluent
 
 final class Token: Model, Content {
-    static var schema = "tokens"
+    static var schema = v2021_11_04.schemaName
     
     @ID
     var id: UUID?
     
-    @Field(key: "value")
+    @Field(key: v2021_11_04.value)
     var value: String
     
-    @Parent(key: "userID")
+    @Parent(key: v2021_11_04.userID)
     var user: User
     
     init() { }

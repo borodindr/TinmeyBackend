@@ -31,10 +31,15 @@ struct CreateMainUser: Migration {
                 try Profile(
                     userID: user.requireID(),
                     name: "Katya Tinmey",
-                    email: "e.tinmey@gmail.com",
+                    email: "katya@tinmey.com",
                     currentStatus: "",
-                    shortAbout: "",
-                    about: ""
+                    shortAbout: "Graphic designer specializing in book design.",
+                    about: """
+        Katya is a graphic designer specializing on book design.
+        Since 2019 she has worked in-house for the Eksmo Publishing House, where she created covers for books of various genres in different techniques.
+        Katya graduated from HSE ART AND DESIGN SCHOOL after studying Communication Design.
+        In 2020 Katya received a grant to study Japanese typography in posters from the Ishibashi Foundation.
+        """
                 )
             }
             .flatMap { $0.save(on: database) }

@@ -9,30 +9,30 @@ import Fluent
 import Vapor
 
 final class Section: Model, Content {
-    static var schema = "sections"
+    static var schema = v2021_11_04.schemaName
     
     @ID
     var id: UUID?
     
-    @Field(key: "sort_index")
+    @Field(key: v2021_11_04.sortIndex)
     var sortIndex: Int
     
-    @Enum(key: "type")
+    @Enum(key: v2021_11_04.type)
     var type: SectionType
     
-    @Field(key: "preview_title")
+    @Field(key: v2021_11_04.previewTitle)
     var previewTitle: String
     
-    @Field(key: "preview_subtitle")
+    @Field(key: v2021_11_04.previewSubtitle)
     var previewSubtitle: String
     
-    @Field(key: "section_subtitle")
+    @Field(key: v2021_11_04.sectionSubtitle)
     var sectionSubtitle: String
     
-    @OptionalField(key: "first_image_name")
+    @OptionalField(key: v2021_11_04.firstImageName)
     var firstImageName: String?
     
-    @OptionalField(key: "second_image_name")
+    @OptionalField(key: v2021_11_04.secondImageName)
     var secondImageName: String?
     
     init() { }

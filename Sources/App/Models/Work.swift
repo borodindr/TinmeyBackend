@@ -9,39 +9,39 @@ import Vapor
 import Fluent
 
 final class Work: Model, Content {
-    static var schema = "works"
+    static var schema = v2021_11_04.schemaName
     
     @ID
     var id: UUID?
     
-    @Field(key: "sort_index")
+    @Field(key: v2021_11_04.sortIndex)
     var sortIndex: Int
     
-    @Timestamp(key: "created_at", on: .create, format: .iso8601)
+    @Timestamp(key: v2021_11_04.createdAt, on: .create, format: .iso8601)
     var createdAt: Date?
     
-    @Timestamp(key: "updated_at", on: .update, format: .iso8601)
+    @Timestamp(key: v2021_11_04.updatedAt, on: .update, format: .iso8601)
     var updatedAt: Date?
     
-    @Enum(key: "type")
+    @Enum(key: v2021_11_04.type)
     var type: WorkType
     
-    @Field(key: "title")
+    @Field(key: v2021_11_04.title)
     var title: String
     
-    @Field(key: "description")
+    @Field(key: v2021_11_04.description)
     var description: String
     
-    @Enum(key: "layout")
+    @Enum(key: v2021_11_04.layout)
     var layout: LayoutType
     
-    @OptionalField(key: "first_image_name")
+    @OptionalField(key: v2021_11_04.firstImageName)
     var firstImageName: String?
     
-    @OptionalField(key: "second_image_name")
+    @OptionalField(key: v2021_11_04.seeMoreLink)
     var secondImageName: String?
     
-    @OptionalField(key: "see_more_link")
+    @OptionalField(key: v2021_11_04.seeMoreLink)
     var seeMoreLink: String?
     
     @Siblings(through: WorkTagPivot.self, from: \.$work, to: \.$tag)
@@ -80,8 +80,6 @@ final class Work: Model, Content {
 
 extension Work {
     enum LayoutType: String, Content {
-        static var name = "work_layout"
-        
         case leftBody
         case middleBody
         case rightBody
@@ -90,8 +88,6 @@ extension Work {
     }
     
     enum WorkType: String, Content {
-        static var name = "work_type"
-        
         case cover
         case layout
     }

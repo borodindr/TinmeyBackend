@@ -9,30 +9,22 @@ import Vapor
 import Fluent
 
 final class User: Model, Content {
-    static var schema = "users"
+    static var schema = v2021_11_04.schemaName
     
     @ID
     var id: UUID?
     
-    @Field(key: "is_main")
+    @Field(key: v2021_11_04.isMain)
     var isMain: Bool
     
-    @Field(key: "username")
+    @Field(key: v2021_11_04.username)
     var username: String
     
-    @Field(key: "password")
+    @Field(key: v2021_11_04.password)
     var password: String
     
     @Children(for: \.$user)
     var profile: [Profile]
-    
-    /*
-     To add:
-     - Photo
-     - Location
-     - Phone
-     - Links
-     */
     
     init() { }
     

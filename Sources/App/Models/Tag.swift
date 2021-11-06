@@ -9,12 +9,12 @@ import Vapor
 import Fluent
 
 final class Tag: Model, Content {
-    static var schema = "tags"
+    static var schema = v2021_11_04.schemeName
     
     @ID
     var id: UUID?
     
-    @Field(key: "name")
+    @Field(key: v2021_11_04.name)
     var name: String
     
     @Siblings(through: WorkTagPivot.self, from: \.$tag, to: \.$work)

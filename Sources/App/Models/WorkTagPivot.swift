@@ -9,15 +9,15 @@ import Foundation
 import Fluent
 
 final class WorkTagPivot: Model {
-    static var schema = "work-tag-pivot"
+    static var schema = v2021_11_04.schemaName
     
     @ID
     var id: UUID?
     
-    @Parent(key: "workID")
+    @Parent(key: v2021_11_04.workID)
     var work: Work
     
-    @Parent(key: "tagID")
+    @Parent(key: v2021_11_04.tagID)
     var tag: Tag
     
     init() { }

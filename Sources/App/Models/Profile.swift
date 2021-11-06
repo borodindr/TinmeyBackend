@@ -9,27 +9,27 @@ import Fluent
 import Vapor
 
 final class Profile: Model, Content {
-    static var schema = "profiles"
+    static var schema = v2021_11_04.schemeName
     
     @ID
     var id: UUID?
     
-    @Parent(key: "userID")
+    @Parent(key: v2021_11_04.userID)
     var user: User
     
-    @Field(key: "name")
+    @Field(key: v2021_11_04.name)
     var name: String
     
-    @Field(key: "email")
+    @Field(key: v2021_11_04.email)
     var email: String
     
-    @Field(key: "current_status")
+    @Field(key: v2021_11_04.currentStatus)
     var currentStatus: String
     
-    @Field(key: "short_about")
+    @Field(key: v2021_11_04.shortAbout)
     var shortAbout: String
     
-    @Field(key: "about")
+    @Field(key: v2021_11_04.about)
     var about: String
     
     init() { }

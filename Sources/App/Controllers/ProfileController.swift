@@ -34,7 +34,6 @@ struct ProfileController: RouteCollection {
             .flatMap { profile in
                 profile.name = updatedProfile.name
                 profile.email = updatedProfile.email
-//                profile.currentStatus = updatedProfile.currentStatus
                 profile.shortAbout = updatedProfile.shortAbout
                 profile.about = updatedProfile.about
                 

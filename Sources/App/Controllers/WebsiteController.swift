@@ -31,10 +31,11 @@ struct WebsiteController: RouteCollection {
             .flatMap { sections in
                 getMainProfile(req)
                     .flatMap { profile in
+                        let meta = WebsiteMeta(req: req, title: "Home", profile: profile)
+                        let header = IndexHeader(profile: profile)
                         let items = sections.map(SectionItem.init)
-                        let header = Header(profile: profile)
                         let context = IndexContext(
-                            title: "Home page",
+                            meta: meta,
                             header: header,
                             about: profile.about,
                             items: items
@@ -56,17 +57,27 @@ struct WebsiteController: RouteCollection {
         let tagsFuture = Tag.query(on: req.db)
             .all()
         
-        return sectionFuture
-            .and(worksFuture)
-            .and(tagsFuture)
-            .map { (arg0: (section: Section, works: [Work]), tags: [Tag]) in
-                (arg0.section, arg0.works, tags)
-            }
-            .flatMap { (section, works, tags) in
-                let items = works.map(PreviewItem.init)
+        return EventLoopFuture
+            .combine(
+                sectionFuture,
+                worksFuture,
+                tagsFuture,
+                getMainProfile(req)
+            )
+            .flatMap { (section, works, tags, profile) in
+                let meta = WebsiteMeta(req: req, title: "Covers", profile: profile)
                 let availableTags = tags.map { $0.name }
-                let header = WorkHeader(section: section, availableTags: availableTags, selectedTag: tagName)
-                let context = WorkContext(title: "Covers", header: header, items: items)
+                let header = WorkHeader(
+                    section: section,
+                    availableTags: availableTags,
+                    selectedTag: tagName
+                )
+                let items = works.map(PreviewItem.init)
+                let context = WorkContext(
+                    meta: meta,
+                    header: header,
+                    items: items
+                )
                 return req.view.render("works", context)
             }
     }
@@ -79,11 +90,21 @@ struct WebsiteController: RouteCollection {
         
         let worksFuture = allWorksFuture(req, type: .layout)
         
-        return sectionFuture.and(worksFuture)
-            .flatMap { section, works in
-                let items = works.map(PreviewItem.init)
+        return EventLoopFuture
+            .combine(
+                sectionFuture,
+                worksFuture,
+                getMainProfile(req)
+            )
+            .flatMap { section, works, profile in
+                let meta = WebsiteMeta(req: req, title: "Layouts", profile: profile)
                 let header = WorkHeader(section: section)
-                let context = WorkContext(title: "Layouts", header: header, items: items)
+                let items = works.map(PreviewItem.init)
+                let context = WorkContext(
+                    meta: meta,
+                    header: header,
+                    items: items
+                )
                 return req.view.render("works", context)
             }
     }
@@ -162,19 +183,80 @@ struct WebsiteController: RouteCollection {
     }
 }
 
-struct IndexContext: Encodable {
-    let title: String
-    let header: Header
+// MARK: - Context
+protocol WebsiteContext: Encodable {
+    associatedtype HeaderType: Header
+    
+    var meta: WebsiteMeta { get }
+    var header: HeaderType { get }
+}
+
+struct IndexContext: WebsiteContext {
+    let meta: WebsiteMeta
+    let header: IndexHeader
     let about: String
     let items: [SectionItem]
 }
 
-struct WorkContext: Encodable {
-    let title: String
+struct WorkContext: WebsiteContext {
+    let meta: WebsiteMeta
     let header: WorkHeader
     let items: [PreviewItem]
 }
 
+// MARK: - Meta
+struct WebsiteMeta: Encodable {
+    let canonical: String
+    let siteName: String = "tinmey design"
+    let title: String
+    let author: String
+    let description: String
+    
+    init(req: Request, title: String, profile: Profile) {
+        self.canonical = req.application.http.server.configuration.urlString()
+        self.title = title
+        self.author = profile.name
+        self.description = profile.shortAbout
+    }
+}
+
+// MARK: - Header
+protocol Header: Encodable {
+    var title: String { get }
+    var description: String { get }
+}
+
+struct IndexHeader: Header {
+    let title: String
+    let description: String
+    let email: String?
+    
+    init(profile: Profile) {
+        self.title = profile.name
+        self.description = profile.shortAbout
+        self.email = profile.email
+    }
+}
+
+struct WorkHeader: Header {
+    let title: String
+    let description: String
+    let availableTags: [String]
+    let selectedTag: String?
+    
+    init(section: Section, availableTags: [String], selectedTag: String?) {
+        self.title = section.previewTitle
+        self.description = section.sectionSubtitle
+        self.availableTags = availableTags
+        self.selectedTag = selectedTag
+    }
+    
+    init(section: Section) {
+        self.init(section: section, availableTags: [], selectedTag: nil)
+    }
+}
+
+// MARK: - Item
 struct SectionItem: Encodable {
     let layout: String
     let title: String
@@ -222,37 +304,5 @@ struct PreviewItem: Encodable {
             self.firstImageLink = ""
             self.secondImageLink = ""
         }
-    }
-}
-
-struct Header: Encodable {
-    let title: String
-    let description: String
-    let status: String?
-    let email: String?
-    
-    init(profile: Profile) {
-        self.title = profile.name
-        self.description = profile.shortAbout
-        self.status = profile.currentStatus
-        self.email = profile.email
-    }
-}
-
-struct WorkHeader: Encodable {
-    let title: String
-    let description: String
-    let availableTags: [String]
-    let selectedTag: String?
-    
-    init(section: Section, availableTags: [String], selectedTag: String?) {
-        self.title = section.previewTitle
-        self.description = section.sectionSubtitle
-        self.availableTags = availableTags
-        self.selectedTag = selectedTag
-    }
-    
-    init(section: Section) {
-        self.init(section: section, availableTags: [], selectedTag: nil)
     }
 }

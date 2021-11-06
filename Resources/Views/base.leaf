@@ -1,24 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
     
     <head>
         <meta charset="UTF-8" />
-        <meta name="og:site_name" content="tinmey design" />
-        <link rel="canonical" href="https://your-website-url.com" />
-        <meta name="twitter:url" content="https://your-website-url.com" />
-        <meta name="og:url" content="https://your-website-url.com" />
-        <title>#(title) | tinmey design</title>
-        <meta name="twitter:title" content="Ekaterina Tinmey | tinmey design" />
-        <meta name="og:title" content="Ekaterina Tinmey | tinmey design" />
-        <meta name="description" content="Graphic designer specialising in book design." />
-        <meta name="twitter:description" content="Graphic designer specialising in book design." />
-        <meta name="og:description" content="Graphic designer specialising in book design." />
-        <meta name="twitter:card" content="summary" />
         <link rel="stylesheet" href="/styles/style.css" type="text/css" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="canonical" href="#(meta.canonical)" />
+
+        <title>#(meta.title) | #(meta.siteName)</title>
+        <meta name="author" content="#(meta.author)"/>
+        <meta name="description" content="#(meta.description)" />
+        <!-- open graph -->
+        <meta name="og:site_name" content="#(meta.siteName)" />
+        <meta name="og:title" content="#(meta.title) | #(meta.siteName)" />
+        <meta name="og:description" content="#(meta.description)" />
+        <meta name="og:url" content="#(meta.canonical)" />
+        <!-- twitter -->
+        <meta name="twitter:url" content="#(meta.canonical)" />
+        <meta name="twitter:title" content="#(meta.title) | #(meta.siteName)" />
+        <meta name="twitter:card" content="#(meta.author)" />
+        <meta name="twitter:description" content="#(meta.description)" />
+        <!-- font -->
         <link rel="preconnect" href="https://fonts.googleapis.com"> 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
         <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+        <!-- favicon -->
 <!--        <link rel="icon" href="/favicon-16.png" sizes="16x16" />-->
 <!--        <link rel="icon" href="/favicon-32.png" sizes="32x32" />-->
 <!--        <link rel="icon" href="/favicon-128.png" sizes="128x128" />-->
@@ -46,13 +52,11 @@
             </div>
         </div>
         <div class="wrapper">
-            <!-- <header> -->
-                <div class="hline"></div>
-                <div class="row">
-                    #import("header")
-                </div>
-                <div class="hline"></div>
-            <!-- </header> -->
+            <div class="hline"></div>
+            <div class="row">
+                #import("header")
+            </div>
+            <div class="hline"></div>
         </div>
         <div class="wrapper">
             #import("content")

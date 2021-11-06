@@ -118,7 +118,7 @@ struct WorksController: RouteCollection {
                 
                     .flatMap {
                         // Delete images from storage
-                        req.aws.s3.delete(imageNames, at: imageFolder)
+                        req.fileHandler.delete(imageNames, at: imageFolder)
                     }
                     .flatMap {
                         // Reorder other works
@@ -231,7 +231,7 @@ struct WorksController: RouteCollection {
                     return req.eventLoop.future(error: error)
                 }
                 let name = "Work-(\(workID))-\(imageType.rawValue).\(fileExtension)"
-                return req.aws.s3.upload(data.file.data, named: name, at: imageFolder)
+                return req.fileHandler.upload(data.file.data, named: name, at: imageFolder)
                     .flatMap { _ in
                         switch imageType {
                         case .firstImage:
@@ -255,7 +255,7 @@ struct WorksController: RouteCollection {
                 try imageType.imageName(in: work)
             }
             .flatMap { imageName in
-                req.aws.s3.download(imageName, at: imageFolder)
+                req.fileHandler.download(imageName, at: imageFolder)
             }
     }
     

@@ -74,7 +74,7 @@ struct SectionsController: RouteCollection {
             .unwrap(or: Abort(.notFound))
             .flatMap { section in
                 let name = "Section-\(section.type.rawValue)-\(imageType.rawValue).\(fileExtension)"
-                return req.aws.s3.upload(data.file.data, named: name, at: imageFolder)
+                return req.fileHandler.upload(data.file.data, named: name, at: imageFolder)
                     .flatMap {
                         switch imageType {
                         case .firstImage:
@@ -99,7 +99,7 @@ struct SectionsController: RouteCollection {
                 try imageType.imageName(in: section)
             }
             .flatMap { imageName in
-                req.aws.s3.download(imageName, at: imageFolder)
+                req.fileHandler.download(imageName, at: imageFolder)
             }
     }
 }

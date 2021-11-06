@@ -121,7 +121,7 @@ struct WebsiteController: RouteCollection {
                 try imageType.imageName(in: section)
             }
             .flatMap { imageName in
-                req.aws.s3.download(imageName, at: sectionsImageFolder)
+                req.fileHandler.download(imageName, at: sectionsImageFolder)
             }
     }
     
@@ -134,7 +134,7 @@ struct WebsiteController: RouteCollection {
                 try imageType.imageName(in: work)
             }
             .flatMap { imageName in
-                req.aws.s3.download(imageName, at: worksImageFolder)
+                req.fileHandler.download(imageName, at: worksImageFolder)
             }
     }
     
@@ -179,7 +179,7 @@ struct WebsiteController: RouteCollection {
     }
     
     func downloadResumeHandler(_ req: Request) -> EventLoopFuture<Response> {
-        req.aws.s3.download(resumeName, at: resumeFolder)
+        req.fileHandler.download(resumeName, at: resumeFolder)
     }
 }
 

@@ -23,13 +23,13 @@ struct ResumeController: RouteCollection {
     }
     
     func downloadHandler(_ req: Request) -> EventLoopFuture<Response> {
-        req.aws.s3.download(resumeName, at: resumeFolder)
+        req.fileHandler.download(resumeName, at: resumeFolder)
     }
     
     func uploadHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let data = try req.content.decode(FileUploadData.self)
         try data.validateExtension(["pdf"])
-        return req.aws.s3
+        return req.fileHandler
             .upload(data.file.data, named: resumeName, at: resumeFolder)
             .map { .accepted }
     }

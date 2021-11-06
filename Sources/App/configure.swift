@@ -35,9 +35,11 @@ public func configure(_ app: Application) throws {
         database: Environment.get("DATABASE_NAME") ?? databaseName
     ), as: .psql)
     
-    let awsClient = AWSClient(httpClientProvider: .shared(app.http.client.shared))
-    app.aws.client = awsClient
-    app.aws.s3 = S3(client: awsClient, region: .uswest1)
+    if app.environment == .production || app.environment == .staging {
+        let awsClient = AWSClient(httpClientProvider: .shared(app.http.client.shared))
+        app.aws.client = awsClient
+        app.aws.s3 = S3(client: awsClient, region: .uswest1)
+    }
     
     app.migrations.add(CreateUser())
     app.migrations.add(CreateProfile())

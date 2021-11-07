@@ -39,7 +39,6 @@ final class Profile: Model, Content {
         userID: User.IDValue,
         name: String,
         email: String,
-//        currentStatus: String,
         shortAbout: String,
         about: String
     ) {
@@ -47,7 +46,6 @@ final class Profile: Model, Content {
         self.$user.id = userID
         self.name = name
         self.email = email
-//        self.currentStatus = currentStatus
         self.shortAbout = shortAbout
         self.about = about
     }

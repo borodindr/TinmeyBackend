@@ -23,9 +23,6 @@ final class Profile: Model, Content {
     @Field(key: v2021_11_04.email)
     var email: String
     
-//    @Field(key: v2021_11_04.currentStatus)
-//    var currentStatus: String
-    
     @Field(key: v2021_11_04.shortAbout)
     var shortAbout: String
     

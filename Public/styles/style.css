@@ -99,6 +99,10 @@ nav a:focus, nav a:hover {
     text-decoration: none;
 }
 
+nav img {
+    max-height: 20px;
+}
+
 .row {
     display: flex;
     justify-content: center;

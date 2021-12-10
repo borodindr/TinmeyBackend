@@ -44,9 +44,22 @@
                         <li><a href="/layouts">Layouts</a></li>
                     </ul>
                     <ul>
-                        <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li>
-                        <li><a href="https://medium.com/@katyatinmey" target="_blank">Medium</a></li>
-                        <li><a href="https://www.instagram.com/tinmeydesign" target="_blank">Instagram</a></li>
+                        <li>
+                            <a href="mailTo:katya@tinmey.com">
+                                <div class="email">katya@tinmey.com</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.instagram.com/tinmeydesign" target="_blank">
+                                <img src="instagram-icon.png">
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://medium.com/@katyatinmey" target="_blank">
+                                <img src="medium-icon.png">
+                            </a>
+                        </li>
+                        <!-- <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li> -->
                     </ul>
                 </nav>
             </div>

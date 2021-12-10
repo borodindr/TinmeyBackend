@@ -8,7 +8,7 @@
 :root {
     /*--Colors--*/
     /*background colors*/
-    --bg-color: #FAB5C9;
+    --bg-color: #FAEBD2;
     --box-bg-color: #FFFFFF;
     --button-bg-color: #F8DBE4;
     --separator-color: #717171;
@@ -75,8 +75,10 @@ nav {
 }
 
 nav ul {
-    display: block;
+    display: flex;
+    flex-direction: row;
     list-style: none;
+    align-items: center;
 }
 
 nav li {
@@ -88,6 +90,10 @@ nav li a {
     color: var(--text-color);
 }
 
+nav li .email {
+    font-size: 0.875rem;
+}
+
 nav a {
     display: block;
     text-align: center;
@@ -97,6 +103,10 @@ nav a {
 
 nav a:focus, nav a:hover {
     text-decoration: none;
+}
+
+nav img {
+    max-height: 1.25rem;
 }
 
 .row {

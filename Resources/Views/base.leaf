@@ -51,13 +51,13 @@
                             </a>
                         </li>
                         <li>
-                            <a href="https://www.instagram.com/tinmeydesign" target="_blank">
-                                <img src="instagram-icon.png">
+                            <a class="icon" href="https://www.instagram.com/tinmeydesign" target="_blank">
+                                <img src="instagram-icon.png" alt="instagram icon">
                             </a>
                         </li>
                         <li>
-                            <a href="https://medium.com/@katyatinmey" target="_blank">
-                                <img src="medium-icon.png">
+                            <a class="icon" href="https://medium.com/@katyatinmey" target="_blank">
+                                <img src="medium-icon.png" alt="medium icon">
                             </a>
                         </li>
                         <!-- <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li> -->

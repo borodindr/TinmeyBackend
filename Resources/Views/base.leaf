@@ -46,8 +46,8 @@
                     </ul>
                     <ul>
                         <li>
-                            <a href="mailTo:katya@tinmey.com">
-                                <div class="email">katya@tinmey.com</div>
+                            <a href="mailTo:#(meta.email)">
+                                <div class="email">#(meta.email)</div>
                             </a>
                         </li>
                         <li>

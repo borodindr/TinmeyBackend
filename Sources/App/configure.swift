@@ -44,6 +44,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateUser())
     app.migrations.add(CreateProfile())
     app.migrations.add(DeleteCurrentStatusInProfile())
+    app.migrations.add(AddLocationInProfile())
     app.migrations.add(CreateWork())
     app.migrations.add(CreateTag())
     app.migrations.add(CreateWorkTagPivot())

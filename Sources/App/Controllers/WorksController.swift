@@ -189,6 +189,9 @@ struct WorksController: RouteCollection {
                     .flatMapEach(on: req.eventLoop) { work in
                         work.save(on: req.db)
                     }
+                    .flatMap {
+                        workToReorder.$tags.load(on: req.db)
+                    }
                     .map { _ in workToReorder }
                     .flatMapThrowing { try WorkAPIModel($0) }
             }
@@ -210,6 +213,9 @@ struct WorksController: RouteCollection {
                     }
                     .flatMapEach(on: req.eventLoop) { work in
                         work.save(on: req.db)
+                    }
+                    .flatMap {
+                        workToReorder.$tags.load(on: req.db)
                     }
                     .map { _ in workToReorder }
                     .flatMapThrowing { try WorkAPIModel($0) }

@@ -15,6 +15,7 @@ extension ProfileAPIModel {
         self.init(
             name: profile.name,
             email: profile.email,
+            location: profile.location,
             shortAbout: profile.shortAbout,
             about: profile.about
         )

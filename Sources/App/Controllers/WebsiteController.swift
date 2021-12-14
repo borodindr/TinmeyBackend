@@ -211,12 +211,14 @@ struct WebsiteMeta: Encodable {
     let title: String
     let author: String
     let description: String
+    let email: String
     
     init(title: String, profile: Profile) {
         self.canonical = "https://tinmey.com" //req.application.http.server.configuration.urlString()
         self.title = title
         self.author = profile.name
         self.description = profile.shortAbout
+        self.email = profile.email
     }
 }
 
@@ -229,12 +231,12 @@ protocol Header: Encodable {
 struct IndexHeader: Header {
     let title: String
     let description: String
-    let email: String?
+    let location: String
     
     init(profile: Profile) {
         self.title = profile.name
         self.description = profile.shortAbout
-        self.email = profile.email
+        self.location = profile.location
     }
 }
 

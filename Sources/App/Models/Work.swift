@@ -38,7 +38,7 @@ final class Work: Model, Content {
     @OptionalField(key: v2021_11_04.firstImageName)
     var firstImageName: String?
     
-    @OptionalField(key: v2021_11_04.seeMoreLink)
+    @OptionalField(key: v2021_11_04.secondImageName)
     var secondImageName: String?
     
     @OptionalField(key: v2021_11_04.seeMoreLink)

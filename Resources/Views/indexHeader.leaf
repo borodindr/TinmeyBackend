@@ -4,9 +4,7 @@
         <div>
             <h1>#(header.title)</h1>
         </div>
-        #if(header.email):
-        <a href="mailTo: #(header.email)" class="email"><p>#(header.email)</p></a>
-        #endif
+        <h3>#(header.location)</h3>
     </div>
 </div>
 <div class="vline"></div>

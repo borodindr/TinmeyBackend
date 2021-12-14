@@ -23,8 +23,8 @@ final class Profile: Model, Content {
     @Field(key: v2021_11_04.email)
     var email: String
     
-//    @Field(key: v2021_11_04.currentStatus)
-//    var currentStatus: String
+    @Field(key: v2021_12_13.location)
+    var location: String
     
     @Field(key: v2021_11_04.shortAbout)
     var shortAbout: String
@@ -39,7 +39,7 @@ final class Profile: Model, Content {
         userID: User.IDValue,
         name: String,
         email: String,
-//        currentStatus: String,
+        location: String,
         shortAbout: String,
         about: String
     ) {
@@ -47,7 +47,7 @@ final class Profile: Model, Content {
         self.$user.id = userID
         self.name = name
         self.email = email
-//        self.currentStatus = currentStatus
+        self.location = location
         self.shortAbout = shortAbout
         self.about = about
     }

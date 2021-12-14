@@ -32,7 +32,7 @@ struct CreateMainUser: Migration {
                     userID: user.requireID(),
                     name: "Katya Tinmey",
                     email: "katya@tinmey.com",
-//                    currentStatus: "",
+                    location: "Austin, TX",
                     shortAbout: "Graphic designer specializing in book design.",
                     about: """
         Katya is a graphic designer specializing on book design.

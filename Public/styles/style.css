@@ -149,10 +149,15 @@ nav img {
     justify-content: space-between;
     height: 100%;
     width: 100%;
+
 }
 
 .wide .content {
     padding: var(--wide-box-content-padding);
+}
+
+.box .content h2 {
+    white-space: pre-wrap;
 }
 
 .box-about {
@@ -161,6 +166,7 @@ nav img {
 
 .box-description {
     margin-top: 1rem;
+    white-space: pre-wrap;
 }
 
 .box-button:link {

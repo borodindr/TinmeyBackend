@@ -45,6 +45,7 @@
                         <li><a href="/layouts">Layouts</a></li>
                     </ul>
                     <ul>
+                        <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog</a></li>
                         <li>
                             <a href="mailTo:#(meta.email)">
                                 <div class="email">#(meta.email)</div>
@@ -56,11 +57,10 @@
                             </a>
                         </li>
                         <li>
-                            <a class="icon" href="https://medium.com/@katyatinmey" target="_blank">
-                                <img src="medium-icon.png" alt="medium icon">
+                            <a href="https://www.behance.net/katyatinmey" target="_blank">
+                                <img src="behance-icon.png" alt="behance icon">
                             </a>
                         </li>
-                        <!-- <li><a href="https://www.behance.net/katyatinmey" target="_blank">Behance</a></li> -->
                     </ul>
                 </nav>
             </div>

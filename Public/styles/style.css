@@ -13,8 +13,8 @@
     --button-bg-color: #F2EDEE;
     --button-hover-bg-color: #FA7D7D;
     --separator-color: #FFFFFF;
-    --tag-bg-color: #8FE08A;
-    --tag-selected-bg-color: blue;
+    --tag-bg-color: #F2EDEE;
+    --tag-selected-bg-color: #FA7D7D;
     /*text colors*/
     --text-color: #181818;
     --secondary-text-color: #717171;
@@ -149,7 +149,6 @@ nav img {
     justify-content: space-between;
     height: 100%;
     width: 100%;
-
 }
 
 .wide .content {
@@ -199,6 +198,7 @@ nav img {
 
 .tag-selected {
     background-color: var(--tag-selected-bg-color);
+    color: white;
 }
 
 .hline {
@@ -244,7 +244,7 @@ p {
 
 [class*="tag"] {
     font-size: 0.75rem;
-    color: var(--text-color);
+    /*color: var(--text-color);*/
 }
 
 footer {

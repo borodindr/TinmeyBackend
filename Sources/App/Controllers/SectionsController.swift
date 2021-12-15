@@ -57,6 +57,7 @@ struct SectionsController: RouteCollection {
             .flatMap { section in
                 section.previewTitle = updatedSection.preview.title
                 section.previewSubtitle = updatedSection.preview.subtitle
+                section.sectionSubtitle = updatedSection.subtitle
                 
                 return section.save(on: req.db)
                     .map { SectionAPIModel(section) }

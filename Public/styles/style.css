@@ -8,12 +8,13 @@
 :root {
     /*--Colors--*/
     /*background colors*/
-    --bg-color: #FAEBD2;
-    --box-bg-color: #FFFFFF;
-    --button-bg-color: #F8DBE4;
-    --separator-color: #717171;
-    --tag-bg-color: #8FE08A;
-    --tag-selected-bg-color: blue;
+    --bg-color: #F2EDEE;
+    --box-bg-color: #F4C2C1;
+    --button-bg-color: #F2EDEE;
+    --button-hover-bg-color: #FA7D7D;
+    --separator-color: #FFFFFF;
+    --tag-bg-color: #F2EDEE;
+    --tag-selected-bg-color: #FA7D7D;
     /*text colors*/
     --text-color: #181818;
     --secondary-text-color: #717171;
@@ -59,12 +60,13 @@ a:hover {
 }
 
 .white-bg {
-    background-color: white;
+    background-color: #FA7D7D;
     margin-left: auto;
     margin-right: auto;
 }
 
 nav {
+    color: white;
     overflow: hidden;
     height: var(--nav-bar-height);
     padding: var(--nav-bar-padding);
@@ -86,18 +88,26 @@ nav li {
     font-size: 1rem;
 }
 
-nav li a {
+/*nav li a {
     color: var(--text-color);
+}*/
+
+nav li img {
+    filter: brightness(0) invert(1);
 }
 
 nav li .email {
     font-size: 0.875rem;
 }
 
+.icon {
+    margin: .25rem .5rem;
+}
+
 nav a {
     display: block;
     text-align: center;
-    padding: .25rem 1rem;
+    margin: .25rem 1rem;
     text-decoration:none
 }
 
@@ -145,15 +155,20 @@ nav img {
     padding: var(--wide-box-content-padding);
 }
 
+.box .content h2 {
+    white-space: pre-wrap;
+}
+
 .box-about {
     white-space: pre-wrap;
 }
 
 .box-description {
     margin-top: 1rem;
+    white-space: pre-wrap;
 }
 
-.box-button {
+.box-button:link {
     text-decoration: none;
     
     background-color: var(--button-bg-color);
@@ -161,6 +176,11 @@ nav img {
     border-radius: 2.5px;
     display: inline-block;
     border: 0.25px solid var(--secondary-text-color);
+}
+
+.box-button:hover {
+    background-color: var(--button-hover-bg-color);
+    color: white;
 }
 
 .tag-list {
@@ -178,6 +198,7 @@ nav img {
 
 .tag-selected {
     background-color: var(--tag-selected-bg-color);
+    color: white;
 }
 
 .hline {
@@ -223,7 +244,7 @@ p {
 
 [class*="tag"] {
     font-size: 0.75rem;
-    color: var(--text-color);
+    /*color: var(--text-color);*/
 }
 
 footer {

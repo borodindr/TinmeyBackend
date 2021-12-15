@@ -23,7 +23,7 @@
         <div>
 
         </div>
-        <h2>#(header.description)</h2>
+        <h3>#(header.description)</h3>
     </div>
 </div>
 <!-- <div class="vline clear"></div>

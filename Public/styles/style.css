@@ -17,7 +17,7 @@
     --tag-selected-bg-color: #FA7D7D;
     /*text colors*/
     --text-color: #181818;
-    --secondary-text-color: #717171;
+    --secondary-text-color: #808080;
     --footer-text-color: #8a8a8a;
     
     /*--Font sizes--*/
@@ -223,7 +223,7 @@ h1 {
 }
 
 h2 {
-    font-size: 1.5rem;
+    font-size: 1.375rem;
     color: var(--text-color);
 }
 

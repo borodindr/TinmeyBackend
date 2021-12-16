@@ -56,10 +56,10 @@ struct CreateMainUser: Migration {
     }
     
     private func generatePassword() -> String {
-        if environment == .development {
-            return "admin"
-        } else {
+        if environment == .production {
             return Data([UInt8].random(count: 32)).base32EncodedString()
+        } else {
+            return "admin"
         }
     }
     

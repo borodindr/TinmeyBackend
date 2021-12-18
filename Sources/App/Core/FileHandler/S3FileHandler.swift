@@ -23,7 +23,26 @@ struct S3FileHandler: FileHandler {
     
     // MARK: - Download
     func download(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Response> {
-        // TODO: Add cache
+        guard let clientETag = request.headers.first(name: .ifNoneMatch) else {
+            return getFile(fileName, at: pathComponents)
+        }
+        return getFileMetadata(for: fileName, at: pathComponents)
+            .flatMap { headOutput in
+                if let fileETag = headOutput.eTag, fileETag == clientETag {
+                    return request.eventLoop.future(Response(status: .notModified))
+                } else {
+                    return getFile(fileName, at: pathComponents)
+                }
+            }
+    }
+    
+    private func getFileMetadata(for fileName: String, at pathComponents: [String]) -> EventLoopFuture<S3.HeadObjectOutput> {
+        let key = objectRequestKey(for: fileName, at: pathComponents)
+        let request = S3.HeadObjectRequest(bucket: bucketName, key: key)
+        return s3.headObject(request)
+    }
+    
+    private func getFile(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Response> {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.GetObjectRequest(bucket: bucketName, key: key)
         return s3.getObject(request)
@@ -31,7 +50,16 @@ struct S3FileHandler: FileHandler {
                 guard let buffer = output.body?.asByteBuffer() else {
                     return Response(status: .noContent)
                 }
-                return Response(body: .init(buffer: buffer))
+                var headers: HTTPHeaders = [:]
+                if let eTag = output.eTag {
+                    headers.replaceOrAdd(name: .eTag, value: eTag)
+                }
+                if let fileExtension = fileName.components(separatedBy: ".").last,
+                   let type = HTTPMediaType.fileExtension(fileExtension) {
+                    headers.contentType = type
+                }
+                
+                return Response(status: .ok, headers: headers, body: .init(buffer: buffer))
             }
     }
     

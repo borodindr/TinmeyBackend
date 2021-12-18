@@ -13,13 +13,13 @@ struct FileUploadData: Content {
 
 extension FileUploadData {
     private var imageExtensions: [String] {
-        ["png", "jpg", "jpeg"]
+        ["png", "jpg", "jpeg", "gif"]
     }
     
     func validExtension(_ availableExtensions: [String]) throws -> String {
         guard let fileExtension = file.extension,
               availableExtensions.contains(fileExtension.lowercased()) else {
-            throw Abort(.badRequest, reason: "File extension should be png, jpg or jpeg")
+            throw Abort(.badRequest, reason: "File extension should be \(imageExtensions.joined(separator: ", "))")
         }
         return fileExtension
     }

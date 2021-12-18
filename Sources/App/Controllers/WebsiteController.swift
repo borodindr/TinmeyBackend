@@ -31,7 +31,7 @@ struct WebsiteController: RouteCollection {
             .flatMap { sections in
                 getMainProfile(req)
                     .flatMap { profile in
-                        let meta = WebsiteMeta(req: req, title: "Home", profile: profile)
+                        let meta = WebsiteMeta(title: "Home", profile: profile)
                         let header = IndexHeader(profile: profile)
                         let items = sections.map(SectionItem.init)
                         let context = IndexContext(
@@ -65,7 +65,7 @@ struct WebsiteController: RouteCollection {
                 getMainProfile(req)
             )
             .flatMap { (section, works, tags, profile) in
-                let meta = WebsiteMeta(req: req, title: "Covers", profile: profile)
+                let meta = WebsiteMeta(title: "Covers", profile: profile)
                 let availableTags = tags.map { $0.name }
                 let header = WorkHeader(
                     section: section,
@@ -97,7 +97,7 @@ struct WebsiteController: RouteCollection {
                 getMainProfile(req)
             )
             .flatMap { section, works, profile in
-                let meta = WebsiteMeta(req: req, title: "Layouts", profile: profile)
+                let meta = WebsiteMeta(title: "Layouts", profile: profile)
                 let header = WorkHeader(section: section)
                 let items = works.map(PreviewItem.init)
                 let context = WorkContext(
@@ -211,12 +211,14 @@ struct WebsiteMeta: Encodable {
     let title: String
     let author: String
     let description: String
+    let email: String
     
-    init(req: Request, title: String, profile: Profile) {
-        self.canonical = req.application.http.server.configuration.urlString()
+    init(title: String, profile: Profile) {
+        self.canonical = "https://tinmey.com" //req.application.http.server.configuration.urlString()
         self.title = title
         self.author = profile.name
         self.description = profile.shortAbout
+        self.email = profile.email
     }
 }
 
@@ -229,12 +231,12 @@ protocol Header: Encodable {
 struct IndexHeader: Header {
     let title: String
     let description: String
-    let email: String?
+    let location: String
     
     init(profile: Profile) {
         self.title = profile.name
         self.description = profile.shortAbout
-        self.email = profile.email
+        self.location = profile.location
     }
 }
 

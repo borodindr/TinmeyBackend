@@ -25,6 +25,7 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.delete(":workID", use: deleteHandler)
         tokenAuthGroup.put(":workID", use: updateHandler)
         tokenAuthGroup.put(":workID", "reorder", ":direction", use: reorderHandler)
+        tokenAuthGroup.put(":workID", "swap", use: swapImagesHandler)
         ImageType.allCases.forEach { imageType in
             tokenAuthGroup.on(.POST, ":workID", "\(imageType.rawValue)", body: .collect(maxSize: "10mb"), use: {
                 try addImageHandler($0, imageType: imageType)
@@ -172,6 +173,24 @@ struct WorksController: RouteCollection {
         }
     }
     
+    func swapImagesHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
+        Work.find(req.parameters.get("workID"), on: req.db)
+            .unwrap(or: Abort(.notFound))
+            .flatMap { work in
+                let newFirstImageName = work.secondImageName
+                let newSecondImageName = work.firstImageName
+                work.firstImageName = newFirstImageName
+                work.secondImageName = newSecondImageName
+                return work.save(on: req.db)
+                    .flatMap {
+                        work.$tags.load(on: req.db)
+                    }
+                    .flatMapThrowing {
+                        try WorkAPIModel(work)
+                    }
+            }
+    }
+    
     private func reorderWorkForward(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
         Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
@@ -188,6 +207,9 @@ struct WorksController: RouteCollection {
                     }
                     .flatMapEach(on: req.eventLoop) { work in
                         work.save(on: req.db)
+                    }
+                    .flatMap {
+                        workToReorder.$tags.load(on: req.db)
                     }
                     .map { _ in workToReorder }
                     .flatMapThrowing { try WorkAPIModel($0) }
@@ -210,6 +232,9 @@ struct WorksController: RouteCollection {
                     }
                     .flatMapEach(on: req.eventLoop) { work in
                         work.save(on: req.db)
+                    }
+                    .flatMap {
+                        workToReorder.$tags.load(on: req.db)
                     }
                     .map { _ in workToReorder }
                     .flatMapThrowing { try WorkAPIModel($0) }

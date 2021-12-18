@@ -7,16 +7,7 @@
 	#export("content"):
 		<div class="row">
         	<div class="vline"></div>
-        	<div class="box phone-hide">
-    			<div class="content">
-	        		<div></div>
-		        	<div>
-		            	<a href="/download/resume" class="box-button" target="_blank">Download CV</a>
-		        	</div>
-    			</div>
-    		</div>
-    		<div class="vline phone-hide"></div>
-	        <div class="box wide">
+        	<div class="box wide">
 	    		<div class="content">
 		        	<div class="phone-hide"></div>
 		        	<div>
@@ -27,6 +18,15 @@
 		        	</div>
 	    		</div>
 	    	</div>
+    		<div class="vline phone-hide"></div>
+    		<div class="box phone-hide">
+    			<div class="content">
+	        		<div></div>
+		        	<div>
+		            	<a href="/download/resume" class="box-button" target="_blank">Download CV</a>
+		        	</div>
+    			</div>
+    		</div>
     		<div class="vline"></div>
 		</div>
     	<div class="hline"></div>

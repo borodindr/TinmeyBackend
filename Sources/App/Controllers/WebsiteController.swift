@@ -165,7 +165,13 @@ struct WebsiteController: RouteCollection {
                 .filter(\.$name == tagName)
                 .first()
                 .unwrap(or: Abort(.notFound))
-                .flatMap { $0.$works.query(on: req.db).with(\.$tags).all() }
+                .flatMap { tag in
+                    tag.$works
+                        .query(on: req.db)
+                        .sort(\.$sortIndex, .descending)
+                        .with(\.$tags)
+                        .all()
+                }
         } else {
             return allWorksFuture(req, type: type)
         }

@@ -66,11 +66,10 @@
             </div>
         </div>
         <div class="wrapper">
-            <div class="hline"></div>
+            <div class="hline-large"></div>
             <div class="row">
                 #import("header")
             </div>
-            <div class="hline"></div>
         </div>
         <div class="wrapper">
             #import("content")

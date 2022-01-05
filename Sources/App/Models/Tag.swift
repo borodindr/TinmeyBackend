@@ -29,7 +29,7 @@ final class Tag: Model, Content {
 }
 
 extension Tag {
-    static func addTag(_ name: String, to work: Work, on req: Request) -> EventLoopFuture<Void> {
+    static func add(_ name: String, to work: Work, on req: Request) -> EventLoopFuture<Void> {
         Tag.query(on: req.db)
             .filter(\.$name == name)
             .first()
@@ -48,7 +48,7 @@ extension Tag {
             }
     }
     
-    static func deleteTag(_ name: String, from work: Work, on req: Request) -> EventLoopFuture<Void> {
+    static func delete(_ name: String, from work: Work, on req: Request) -> EventLoopFuture<Void> {
         Tag.query(on: req.db)
             .filter(\.$name == name)
             .first()
@@ -60,23 +60,23 @@ extension Tag {
             }
     }
     
-    static func addTags(_ tags: [String], to work: Work, on req: Request) -> EventLoopFuture<Void> {
+    static func add(_ tags: [String], to work: Work, on req: Request) -> EventLoopFuture<Void> {
         tags
             .map { tagName in
-                Tag.addTag(tagName, to: work, on: req)
+                Tag.add(tagName, to: work, on: req)
             }
             .flatten(on: req.eventLoop)
     }
     
-    static func deleteTags(_ tags: [String], from work: Work, on req: Request) -> EventLoopFuture<Void> {
+    static func delete(_ tags: [String], from work: Work, on req: Request) -> EventLoopFuture<Void> {
         tags
             .map { tagName in
-                Tag.deleteTag(tagName, from: work, on: req)
+                Tag.delete(tagName, from: work, on: req)
             }
             .flatten(on: req.eventLoop)
     }
     
-    static func updateTags(to newTags: [String], in work: Work, on req: Request) -> EventLoopFuture<Void> {
+    static func update(to newTags: [String], in work: Work, on req: Request) -> EventLoopFuture<Void> {
         work.$tags.get(on: req.db)
             .flatMap { existingTags in
                 let existingTagsSet = Set(existingTags.map { $0.name })
@@ -85,8 +85,8 @@ extension Tag {
                 let tagsToDelete = existingTagsSet.subtracting(newTagsSet).map { $0 }
                 let tagsToAdd = newTagsSet.subtracting(existingTagsSet).map { $0 }
                 
-                return [deleteTags(tagsToDelete, from: work, on: req),
-                 addTags(tagsToAdd, to: work, on: req)]
+                return [delete(tagsToDelete, from: work, on: req),
+                 add(tagsToAdd, to: work, on: req)]
                     .flatten(on: req.eventLoop)
             }
     }

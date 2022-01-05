@@ -5,8 +5,8 @@
 	#endexport
 
 	#export("content"):
+	<div class="hline"></div>
 		<div class="row">
-        	<div class="vline"></div>
         	<div class="box wide">
 	    		<div class="content">
 		        	<div class="phone-hide"></div>
@@ -27,7 +27,6 @@
 		        	</div>
     			</div>
     		</div>
-    		<div class="vline"></div>
 		</div>
     	<div class="hline"></div>
 		#extend("items"):

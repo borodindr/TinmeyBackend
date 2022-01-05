@@ -16,10 +16,10 @@ extension FileUploadData {
         ["png", "jpg", "jpeg", "gif"]
     }
     
-    func validExtension(_ availableExtensions: [String]) throws -> String {
+    private func validExtension(_ availableExtensions: [String]) throws -> String {
         guard let fileExtension = file.extension,
               availableExtensions.contains(fileExtension.lowercased()) else {
-            throw Abort(.badRequest, reason: "File extension should be \(imageExtensions.joined(separator: ", "))")
+            throw Abort(.badRequest, reason: "File extension should be \(availableExtensions.joined(separator: ", "))")
         }
         return fileExtension
     }
@@ -30,5 +30,9 @@ extension FileUploadData {
     
     func validImageExtension() throws -> String {
         try validExtension(imageExtensions)
+    }
+    
+    func validateImageExtension() throws {
+        try validateExtension(imageExtensions)
     }
 }

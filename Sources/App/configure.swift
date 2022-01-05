@@ -47,6 +47,8 @@ public func configure(_ app: Application) throws {
     app.migrations.add(DeleteCurrentStatusInProfile())
     app.migrations.add(AddLocationInProfile())
     app.migrations.add(CreateWork())
+    app.migrations.add(CreateWorkImage())
+    app.migrations.add(ReplaceLayoutWithItemsInWork(application: app))
     app.migrations.add(CreateTag())
     app.migrations.add(CreateWorkTagPivot())
     app.migrations.add(CreateToken())

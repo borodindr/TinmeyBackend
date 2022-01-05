@@ -12,7 +12,7 @@
     --box-bg-color: #F4C2C1;
     --button-bg-color: #F2EDEE;
     --button-hover-bg-color: #FA7D7D;
-    --separator-color: #FFFFFF;
+    --separator-color: #F2EDEE;
     --tag-bg-color: #F2EDEE;
     --tag-selected-bg-color: #FA7D7D;
     /*text colors*/
@@ -26,11 +26,12 @@
     --nav-bar-height: 3.75rem;
     --nav-bar-padding: 0rem 1.25rem;
     --separator-width: 1px;
+    --separator-large-width: 10px;
     --columns-in-row: 3;
     --box-size: 300px;
     --wide-box-width: calc(2 * var(--box-size) + var(--separator-width));
     --row-height: var(--box-size);
-    --row-width: calc(var(--box-size) * var(--columns-in-row) + (var(--columns-in-row) + 1) * var(--separator-width));
+    --row-width: calc(var(--box-size) * var(--columns-in-row) + (var(--columns-in-row) - 1) * var(--separator-width));
     --box-content-padding: 2.5rem 1.75rem 3.75rem 1.75rem;
     --wide-box-content-padding: 2.5rem 6.25rem 3.75rem 1.75rem;
 }
@@ -203,6 +204,12 @@ nav img {
 
 .hline {
     height: var(--separator-width);
+    background-color: var(--separator-color);
+    max-width: 100%;
+}
+
+.hline-large {
+    height: var(--separator-large-width);
     background-color: var(--separator-color);
     max-width: 100%;
 }

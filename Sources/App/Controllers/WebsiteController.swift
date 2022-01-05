@@ -369,9 +369,11 @@ struct WorkItem: Encodable {
     let rows: [[Item]]
     
     init(work: Work) throws {
-        var list: [WorkItem.Item] = try work.images.map {
-            $0.name == nil ? .clear() : try .image($0)
-        }
+        var list: [WorkItem.Item] = try work.images
+            .sorted(by: { $0.sortIndex < $1.sortIndex })
+            .map {
+                $0.name == nil ? .clear() : try .image($0)
+            }
         list.insert(.body(work), at: work.bodyIndex)
         self.rows = WorkItem.makeTwoDArray(from: list)
     }

@@ -63,6 +63,12 @@ extension Work {
     }
 }
 
+extension Work {
+    enum v2021_12_30 {
+        static let bodyIndex = FieldKey(stringLiteral: "body_index")
+    }
+}
+
 extension Work.WorkType {
     enum v2021_11_04 {
         static let enumName = "work_type"

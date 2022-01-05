@@ -13,7 +13,7 @@ struct WorksController: RouteCollection {
     let imageFolder = "WorkImages"
     
     func boot(routes: RoutesBuilder) throws {
-        let worksRoutes = routes.grouped("api", "works")
+        let worksRoutes = routes.grouped("api", ":workType")
         worksRoutes.get(use: getAllHandler)
         worksRoutes.get(":workID", use: getHandler)
         
@@ -25,111 +25,66 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.delete(":workID", use: deleteHandler)
         tokenAuthGroup.put(":workID", use: updateHandler)
         tokenAuthGroup.put(":workID", "reorder", ":direction", use: reorderHandler)
-        tokenAuthGroup.put(":workID", "swap", use: swapImagesHandler)
-        ImageType.allCases.forEach { imageType in
-            tokenAuthGroup.on(.POST, ":workID", "\(imageType.rawValue)", body: .collect(maxSize: "10mb"), use: {
-                try addImageHandler($0, imageType: imageType)
-            })
-            worksRoutes.get(":workID", "\(imageType.rawValue)", use: {
-                try downloadImageHandler($0, imageType: imageType)
-            })
-        }
+        
+        let imagesGroup = routes.grouped("api", "work_images")
+        imagesGroup.get(use: getAllImages)
+        imagesGroup.get(":imageID", use: downloadImageHandler)
+        let tokenAuthImagesGroup = imagesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
+        tokenAuthImagesGroup.on(.POST, ":imageID", body: .collect(maxSize: "10mb"), use: addImageHandler)
+        tokenAuthImagesGroup.delete(":imageID", use: deleteImageHandler)
         
         // For preview
         worksRoutes.get("preview", "firstImage", use: downloadFirstPreviewImageHandler)
         worksRoutes.get("preview", "secondImage", use: downloadSecondPreviewImageHandler)
     }
     
+    // TEMP
+    func getAllImages(_ req: Request) -> EventLoopFuture<[WorkImage]> {
+        WorkImage.query(on: req.db).all()
+    }
+    
     func getAllHandler(_ req: Request) throws -> EventLoopFuture<[WorkAPIModel]> {
-        let type = try workType(from: req)
-        return Work.query(on: req.db).with(\.$tags)
+        let type = try Work.WorkType.detect(from: req)
+        return Work.query(on: req.db)
             .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .all()
-            .flatMapEachThrowing { work in
-                try WorkAPIModel(work)
-            }
+            .convertToAPIModel(on: req.db)
     }
     
     func getHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
         Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
-            .flatMapThrowing { work in
-                try WorkAPIModel(work)
-            }
+            .convertToAPIModel(on: req.db)
     }
     
     func createHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        let data = try req.content.decode(WorkAPIModel.Create.self)
-        
-        return Work.query(on: req.db)
-            .with(\.$tags)
-            .filter(\.$type == data.type.forSchema)
-            .sort(\.$sortIndex, .descending)
-            .first()
-            .map { lastWork in
-                if let lastWork = lastWork {
-                    return lastWork.sortIndex + 1
-                } else {
-                    return 0
-                }
-            }
-            .map { data.makeWork(sortIndex: $0) }
-            .flatMap { newWork in
-                newWork.save(on: req.db)
-                    .map { newWork }
-            }
-            .flatMap { newWork in
-                Tag.addTags(data.tags, to: newWork, on: req)
-                    .flatMap {
-                        newWork.$tags.load(on: req.db)
-                    }
-                    .flatMapThrowing {
-                        try WorkAPIModel(newWork)
-                    }
-            }
+        let type = try Work.WorkType.detect(from: req)
+        return try req.content
+            .decode(WorkAPIModel.Create.self)
+            .create(on: req, type: type)
+            .convertToAPIModel(on: req.db)
     }
     
     func deleteHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
-            .flatMap { work in
-                // Load tags to find those with empty works after delete
-                work.$tags.load(on: req.db)
-                    .map { work }
+            .flatMap { work -> EventLoopFuture<Int> in
+                let sortIndex = work.sortIndex
+                return [work.deleteImages(on: req),
+                        work.deleteUnusedTags(on: req),
+                        work.delete(on: req.db)]
+                    .flatten(on: req.eventLoop)
+                    .map { sortIndex }
             }
-            .flatMap { workToDelete -> EventLoopFuture<Void> in
-                let imageNames = [workToDelete.firstImageName,
-                                  workToDelete.secondImageName].compactMap { $0 }
-                let tags = workToDelete.tags
-                return workToDelete.delete(on: req.db)
-                    .map { tags }
-                    .flatMapEach(on: req.eventLoop) { tag in
-                        // Load works to find empty
-                        tag.$works.load(on: req.db)
-                            .map { tag }
-                    }
-                    .mapEachCompact { tag in
-                        // pass only empty works tag
-                        tag.works.isEmpty ? tag : nil
-                    }
-                    .flatMapEach(on: req.eventLoop) { tagToDelete in
-                        tagToDelete.delete(on: req.db)
-                    }
-                
-                    .flatMap {
-                        // Delete images from storage
-                        req.fileHandler.delete(imageNames, at: imageFolder)
-                    }
-                    .flatMap {
-                        // Reorder other works
-                        Work.query(on: req.db)
-                            .filter(\.$sortIndex > workToDelete.sortIndex)
-                            .all()
-                            .flatMapEach(on: req.eventLoop) { workToUpdate in
-                                workToUpdate.sortIndex -= 1
-                                return workToUpdate.save(on: req.db)
-                            }
+            .flatMap { deletedSortIndex in
+                // Reorder other works
+                Work.query(on: req.db)
+                    .filter(\.$sortIndex > deletedSortIndex)
+                    .all()
+                    .flatMapEach(on: req.eventLoop) { workToUpdate in
+                        workToUpdate.sortIndex -= 1
+                        return workToUpdate.save(on: req.db)
                     }
             }
             .transform(to: .noContent)
@@ -141,21 +96,18 @@ struct WorksController: RouteCollection {
         return Work.find(req.parameters.get("workID"), on: req.db)
             .unwrap(or: Abort(.notFound))
             .flatMap { work in
-                work.layout = updatedWorkData.layout.forSchema
-                work.type = updatedWorkData.type.forSchema
                 work.title = updatedWorkData.title
                 work.description = updatedWorkData.description
                 work.seeMoreLink = updatedWorkData.seeMoreLink?.absoluteString
+                work.bodyIndex = updatedWorkData.bodyIndex
                 return work.save(on: req.db)
                     .flatMap {
-                        Tag.updateTags(to: updatedWorkData.tags, in: work, on: req)
+                        Tag.update(to: updatedWorkData.tags, in: work, on: req)
                     }
                     .flatMap {
-                        work.$tags.load(on: req.db)
+                        work.updateImages(to: updatedWorkData.images, on: req)
                     }
-                    .flatMapThrowing {
-                        try WorkAPIModel(work)
-                    }
+                    .flatMap { work.convertToAPIModel(on: req.db) }
             }
     }
     
@@ -171,24 +123,6 @@ struct WorksController: RouteCollection {
         case .backward:
             return try reorderWorkBackward(req)
         }
-    }
-    
-    func swapImagesHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        Work.find(req.parameters.get("workID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { work in
-                let newFirstImageName = work.secondImageName
-                let newSecondImageName = work.firstImageName
-                work.firstImageName = newFirstImageName
-                work.secondImageName = newSecondImageName
-                return work.save(on: req.db)
-                    .flatMap {
-                        work.$tags.load(on: req.db)
-                    }
-                    .flatMapThrowing {
-                        try WorkAPIModel(work)
-                    }
-            }
     }
     
     private func reorderWorkForward(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
@@ -208,11 +142,7 @@ struct WorksController: RouteCollection {
                     .flatMapEach(on: req.eventLoop) { work in
                         work.save(on: req.db)
                     }
-                    .flatMap {
-                        workToReorder.$tags.load(on: req.db)
-                    }
-                    .map { _ in workToReorder }
-                    .flatMapThrowing { try WorkAPIModel($0) }
+                    .flatMap { workToReorder.convertToAPIModel(on: req.db) }
             }
     }
     
@@ -233,54 +163,70 @@ struct WorksController: RouteCollection {
                     .flatMapEach(on: req.eventLoop) { work in
                         work.save(on: req.db)
                     }
-                    .flatMap {
-                        workToReorder.$tags.load(on: req.db)
-                    }
-                    .map { _ in workToReorder }
-                    .flatMapThrowing { try WorkAPIModel($0) }
+                    .flatMap { workToReorder.convertToAPIModel(on: req.db) }
             }
     }
     
-    func addImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<HTTPStatus> {
+    func addImageHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let data = try req.content.decode(FileUploadData.self)
-        let fileExtension = try data.validImageExtension()
+        let filename = data.file.filename
+        try data.validateImageExtension()
         
-        
-        return Work.find(req.parameters.get("workID"), on: req.db)
+        return WorkImage.find(req.parameters.get("imageID"), on: req.db)
             .unwrap(or: Abort(.notFound))
-            .flatMap { work in
-                let workID: UUID
+            .flatMap { image in
+                let path: [String]
                 do {
-                    workID = try work.requireID()
+                    path = try FilePathBuilder().workImagePath(for: image)
                 } catch {
-                    return req.eventLoop.future(error: error)
+                    return req.eventLoop.makeFailedFuture(error)
                 }
-                let name = "Work-(\(workID))-\(imageType.rawValue).\(fileExtension)"
-                return req.fileHandler.upload(data.file.data, named: name, at: imageFolder)
-                    .flatMap { _ in
-                        switch imageType {
-                        case .firstImage:
-                            work.firstImageName = name
-                        case .secondImage:
-                            work.secondImageName = name
-                        }
-                        return work.save(on: req.db)
-                            .map { .created }
+                return req.fileHandler.upload(data.file.data, named: filename, at: path)
+                    .flatMap {
+                        image.name = filename
+                        return image.save(on: req.db).map { .created }
                     }
             }
     }
     
-    func downloadImageHandler(_ req: Request, imageType: ImageType) throws -> EventLoopFuture<Response> {
-        guard let workID: UUID = req.parameters.get("workID") else {
-            throw Abort(.badRequest, reason: "Work ID was was not passed")
-        }
-        return Work.find(workID, on: req.db)
-            .unwrap(or: Abort(.notFound, reason: "Work with ID \(workID) not found."))
-            .flatMapThrowing { work in
-                try imageType.imageName(in: work)
+    func deleteImageHandler(_ req: Request) -> EventLoopFuture<HTTPStatus> {
+        WorkImage.find(req.parameters.get("imageID"), on: req.db)
+            .unwrap(or: Abort(.notFound))
+            .flatMap { image in
+                guard let filename = image.name else {
+                    let error =  Abort(.notFound)
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+                let path: [String]
+                do {
+                    path = try FilePathBuilder().workImagePath(for: image)
+                } catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+                return req.fileHandler.delete(filename, at: path)
+                    .flatMap {
+                        image.name = nil
+                        return image.save(on: req.db)
+                    }
             }
-            .flatMap { imageName in
-                req.fileHandler.download(imageName, at: imageFolder)
+            .map { .noContent }
+    }
+    
+    func downloadImageHandler(_ req: Request) throws -> EventLoopFuture<Response> {
+        WorkImage.find(req.parameters.get("imageID"), on: req.db)
+            .unwrap(or: Abort(.notFound))
+            .flatMap { image in
+                guard let filename = image.name else {
+                    let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
+                    return req.eventLoop.makeFailedFuture(Abort(.notFound, reason: reason))
+                }
+                let path: [String]
+                do {
+                    path = try FilePathBuilder().workImagePath(for: image)
+                } catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+                return req.fileHandler.download(filename, at: path)
             }
     }
     

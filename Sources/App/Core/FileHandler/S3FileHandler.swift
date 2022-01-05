@@ -23,6 +23,10 @@ struct S3FileHandler: FileHandler {
     
     // MARK: - Download
     func download(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Response> {
+        download(fileName, at: pathComponents)
+    }
+    
+    func download(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Response> {
         guard let clientETag = request.headers.first(name: .ifNoneMatch) else {
             return getFile(fileName, at: pathComponents)
         }
@@ -65,6 +69,10 @@ struct S3FileHandler: FileHandler {
     
     // MARK: - Upload
     func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: String...) -> EventLoopFuture<Void> {
+        upload(data, named: fileName, at: pathComponents)
+    }
+    
+    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: [String]) -> EventLoopFuture<Void> {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.PutObjectRequest(body: .byteBuffer(data), bucket: bucketName, key: key)
         return s3.putObject(request)
@@ -73,6 +81,10 @@ struct S3FileHandler: FileHandler {
     
     // MARK: - Delete
     func delete(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Void> {
+        delete(fileName, at: pathComponents)
+    }
+    
+    func delete(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Void> {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.DeleteObjectRequest(bucket: bucketName, key: key)
         return s3.deleteObject(request)
@@ -80,6 +92,10 @@ struct S3FileHandler: FileHandler {
     }
     
     func delete(_ fileNames: [String], at pathComponents: String...) -> EventLoopFuture<Void> {
+        delete(fileNames, at: pathComponents)
+    }
+    
+    func delete(_ fileNames: [String], at pathComponents: [String]) -> EventLoopFuture<Void> {
         guard !fileNames.isEmpty else {
             return s3.eventLoopGroup.next().makeSucceededVoidFuture()
         }
@@ -89,6 +105,38 @@ struct S3FileHandler: FileHandler {
         let delete = S3.Delete(objects: objects)
         let request = S3.DeleteObjectsRequest(bucket: bucketName, delete: delete)
         return s3.deleteObjects(request)
+            .map { _ in }
+    }
+    
+    // MARK: - Move
+    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: String...) -> EventLoopFuture<Void> {
+        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    }
+    
+    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: String...) -> EventLoopFuture<Void> {
+        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    }
+    
+    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: [String]) -> EventLoopFuture<Void> {
+        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    }
+    
+    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) -> EventLoopFuture<Void> {
+        copy(fileName, at: srcPathComponents, to: dstPathComponents)
+            .flatMap { _ in
+                delete(fileName, at: srcPathComponents)
+            }
+            .map { _ in }
+    }
+    
+    func copy(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) -> EventLoopFuture<Void> {
+        let srcKey = objectRequestKey(for: fileName, at: srcPathComponents)
+        let dstKey = objectRequestKey(for: fileName, at: dstPathComponents)
+        let copyRequest = S3.CopyObjectRequest(bucket: bucketName,
+                                               copySource: "\(bucketName)/\(srcKey)",
+                                               key: dstKey)
+        
+        return s3.copyObject(copyRequest)
             .map { _ in }
     }
 }

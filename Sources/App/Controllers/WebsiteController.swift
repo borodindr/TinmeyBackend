@@ -20,7 +20,7 @@ struct WebsiteController: RouteCollection {
         routes.get("sections", ":sectionType", ":imageType", use: getSectionImageHandler)
         routes.get("covers", use: coversHandler)
         routes.get("layouts", use: layoutsHandler)
-        routes.get("works", ":workID", ":imageType", use: getWorkImageHandler)
+        routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
         routes.get("download", "resume", use: downloadResumeHandler)
     }
     
@@ -72,13 +72,16 @@ struct WebsiteController: RouteCollection {
                     availableTags: availableTags,
                     selectedTag: tagName
                 )
-                let items = works.map(PreviewItem.init)
-                let context = WorkContext(
-                    meta: meta,
-                    header: header,
-                    items: items
-                )
-                return req.view.render("works", context)
+                do {
+                    let context = WorkContext(
+                        meta: meta,
+                        header: header,
+                        items: try works.map(WorkItem.init)
+                    )
+                    return req.view.render("works", context)
+                } catch {
+                    return indexHandler(req)
+                }
             }
     }
     
@@ -99,13 +102,16 @@ struct WebsiteController: RouteCollection {
             .flatMap { section, works, profile in
                 let meta = WebsiteMeta(title: "Layouts", profile: profile)
                 let header = WorkHeader(section: section)
-                let items = works.map(PreviewItem.init)
-                let context = WorkContext(
-                    meta: meta,
-                    header: header,
-                    items: items
-                )
-                return req.view.render("works", context)
+                do {
+                    let context = WorkContext(
+                        meta: meta,
+                        header: header,
+                        items: try works.map(WorkItem.init)
+                    )
+                    return req.view.render("works", context)
+                } catch {
+                    return indexHandler(req)
+                }
             }
     }
     
@@ -126,15 +132,20 @@ struct WebsiteController: RouteCollection {
     }
     
     func getWorkImageHandler(_ req: Request) throws -> EventLoopFuture<Response> {
-        let imageType = try ImageType.detect(from: req)
-        
-        return Work.find(req.parameters.get("workID"), on: req.db)
+        WorkImage.find(req.parameters.get("imageID"), on: req.db)
             .unwrap(or: Abort(.notFound))
-            .flatMapThrowing { work in
-                try imageType.imageName(in: work)
-            }
-            .flatMap { imageName in
-                req.fileHandler.download(imageName, at: worksImageFolder)
+            .flatMap { image in
+                guard let filename = image.name else {
+                    let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
+                    return req.eventLoop.makeFailedFuture(Abort(.notFound, reason: reason))
+                }
+                let path: [String]
+                do {
+                    path = try FilePathBuilder().workImagePath(for: image)
+                } catch {
+                    return req.eventLoop.makeFailedFuture(error)
+                }
+                return req.fileHandler.download(filename, at: path)
             }
     }
     
@@ -170,6 +181,7 @@ struct WebsiteController: RouteCollection {
                         .query(on: req.db)
                         .sort(\.$sortIndex, .descending)
                         .with(\.$tags)
+                        .with(\.$images)
                         .all()
                 }
         } else {
@@ -178,7 +190,7 @@ struct WebsiteController: RouteCollection {
     }
     
     func allWorksFuture(_ req: Request, type: Work.WorkType) -> EventLoopFuture<[Work]> {
-        Work.query(on: req.db).with(\.$tags)
+        Work.query(on: req.db).with(\.$tags).with(\.$images)
             .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .all()
@@ -207,7 +219,7 @@ struct IndexContext: WebsiteContext {
 struct WorkContext: WebsiteContext {
     let meta: WebsiteMeta
     let header: WorkHeader
-    let items: [PreviewItem]
+    let items: [WorkItem]
 }
 
 // MARK: - Meta
@@ -220,7 +232,7 @@ struct WebsiteMeta: Encodable {
     let email: String
     
     init(title: String, profile: Profile) {
-        self.canonical = "https://tinmey.com" //req.application.http.server.configuration.urlString()
+        self.canonical = "https://tinmey.com"
         self.title = title
         self.author = profile.name
         self.description = profile.shortAbout
@@ -266,51 +278,174 @@ struct WorkHeader: Header {
 
 // MARK: - Item
 struct SectionItem: Encodable {
-    let layout: String
-    let title: String
-    let description: String
-    let buttonDirection: String
-    let buttonText: String
-    let firstImageLink: String
-    let secondImageLink: String
+    let rows: [[Item]]
+    
+    struct Item: Encodable {
+        let itemType: ItemType
+        let title: String?
+        let description: String?
+        let buttonDirection: String?
+        let buttonText: String?
+        let imageLink: String?
+        
+        init(
+            itemType: SectionItem.Item.ItemType,
+            title: String? = nil,
+            description: String? = nil,
+            buttonDirection: String? = nil,
+            buttonText: String? = nil,
+            imageLink: String? = nil
+        ) {
+            self.itemType = itemType
+            self.title = title
+            self.description = description
+            self.buttonDirection = buttonDirection
+            self.buttonText = buttonText
+            self.imageLink = imageLink
+        }
+        
+        enum ItemType: String, Encodable {
+            case body
+            case image
+            case clear
+        }
+    }
+    
+    static func makeTwoDArray(from items: [SectionItem.Item]) -> [[SectionItem.Item]] {
+        let columns = 3
+        
+        var column = 0
+        var columnIndex = 0
+        var result = [[SectionItem.Item]]()
+        
+        for item in items {
+            if columnIndex < columns {
+                if columnIndex == 0 {
+                    result.insert([item], at: column)
+                    columnIndex += 1
+                } else {
+                    result[column].append(item)
+                    columnIndex += 1
+                }
+            } else {
+                column += 1
+                result.insert([item], at: column)
+                columnIndex = 1
+            }
+        }
+        return result
+    }
     
     init(section: Section) {
+        let firstImageItem = Item(itemType: .image, imageLink: "/sections/\(section.type.rawValue)/firstImage")
+        let secondImageItem = Item(itemType: .image, imageLink: "/sections/\(section.type.rawValue)/secondImage")
+        
         switch section.type {
         case .covers:
-            self.layout = Work.LayoutType.rightBody.rawValue
-            self.buttonText = "See covers"
+            let bodyItem = Item(
+                itemType: .body,
+                title: section.previewTitle,
+                description: section.previewSubtitle,
+                buttonDirection: "/\(section.type.rawValue)",
+                buttonText: "See covers"
+            )
+            self.rows = [[firstImageItem, secondImageItem, bodyItem]]
+            
         case .layouts:
-            self.layout = Work.LayoutType.middleBody.rawValue
-            self.buttonText = "See layouts"
+            let bodyItem = Item(
+                itemType: .body,
+                title: section.previewTitle,
+                description: section.previewSubtitle,
+                buttonDirection: "/\(section.type.rawValue)",
+                buttonText: "See layouts"
+            )
+            self.rows = [[firstImageItem, bodyItem, secondImageItem]]
+            
         }
-        self.title = section.previewTitle
-        self.description = section.previewSubtitle
-        self.buttonDirection = "/\(section.type.rawValue)"
-        self.firstImageLink = "/sections/\(section.type.rawValue)/firstImage"
-        self.secondImageLink = "/sections/\(section.type.rawValue)/secondImage"
     }
 }
 
-struct PreviewItem: Encodable {
-    let layout: String
-    let title: String
-    let description: String
-    let tags: [String]
-    let firstImageLink: String
-    let secondImageLink: String
+struct WorkItem: Encodable {
+    let rows: [[Item]]
     
-    init(work: Work) {
-        self.layout = work.layout.rawValue
-        self.title = work.title
-        self.description = work.description
-        self.tags = work.tags.map { $0.name }
-        if let id = work.id?.uuidString {
-            self.firstImageLink = "/works/\(id)/firstImage"
-            self.secondImageLink = "/works/\(id)/secondImage"
-        } else {
-            // TODO: Add placeholder image
-            self.firstImageLink = ""
-            self.secondImageLink = ""
+    init(work: Work) throws {
+        var list: [WorkItem.Item] = try work.images.map {
+            $0.name == nil ? .clear() : try .image($0)
         }
+        list.insert(.body(work), at: work.bodyIndex)
+        self.rows = WorkItem.makeTwoDArray(from: list)
+    }
+    
+    struct Item: Encodable {
+        let itemType: ItemType
+        let title: String?
+        let description: String?
+        let tags: [String]?
+        let imageLink: String?
+        
+        init(
+            itemType: WorkItem.Item.ItemType,
+            title: String? = nil,
+            description: String? = nil,
+            tags: [String]? = nil,
+            imageLink: String? = nil
+        ) {
+            self.itemType = itemType
+            self.title = title
+            self.description = description
+            self.tags = tags
+            self.imageLink = imageLink
+       }
+        
+        static func image(_ image: WorkImage) throws -> Self {
+            try self.init(
+                itemType: .image,
+                imageLink: "/download/work_images/\(image.requireID().uuidString)"
+            )
+        }
+        
+        static func body(_ work: Work) -> Self {
+            self.init(
+                itemType: .body,
+                title: work.title,
+                description: work.description,
+                tags: work.tags.map { $0.name }
+            )
+        }
+        
+        static func clear() -> Self {
+            self.init(itemType: .clear)
+        }
+        
+        enum ItemType: String, Encodable {
+            case body
+            case image
+            case clear
+        }
+    }
+    
+    static func makeTwoDArray(from items: [WorkItem.Item]) -> [[WorkItem.Item]] {
+        let columns = 3
+        
+        var column = 0
+        var columnIndex = 0
+        var result = [[WorkItem.Item]]()
+        
+        for item in items {
+            if columnIndex < columns {
+                if columnIndex == 0 {
+                    result.insert([item], at: column)
+                    columnIndex += 1
+                } else {
+                    result[column].append(item)
+                    columnIndex += 1
+                }
+            } else {
+                column += 1
+                result.insert([item], at: column)
+                columnIndex = 1
+            }
+        }
+        return result
     }
 }

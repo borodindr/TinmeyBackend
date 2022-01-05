@@ -8,7 +8,6 @@
 import TinmeyCore
 import Vapor
 import Fluent
-import CloudKit
 
 extension TimestampProperty {
     func orThrow() throws -> Date {

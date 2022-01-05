@@ -8,6 +8,7 @@ import SotoS3
 public func configure(_ app: Application) throws {
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    app.middleware.use(WebsiteRedirectMiddleware())
     
     if let portEnv = Environment.get("PORT"), let port = Int(portEnv) {
         app.http.server.configuration.port = port
@@ -46,6 +47,8 @@ public func configure(_ app: Application) throws {
     app.migrations.add(DeleteCurrentStatusInProfile())
     app.migrations.add(AddLocationInProfile())
     app.migrations.add(CreateWork())
+    app.migrations.add(CreateWorkImage())
+    app.migrations.add(ReplaceLayoutWithItemsInWork(application: app))
     app.migrations.add(CreateTag())
     app.migrations.add(CreateWorkTagPivot())
     app.migrations.add(CreateToken())

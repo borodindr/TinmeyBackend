@@ -1,46 +1,22 @@
 #for(item in items):
-    <div class="row">
-        <div class="vline"></div>
-        #if(item.layout == "leftBody"):
-            #import("bodyBoxItem")
-            <div class="vline"></div>
-            #extend("firstImageBoxItem")
-            <div class="vline phone-hide"></div>
-            #extend("secondImageBoxItem")
+    <div class="hline-large"></div>
+    #for(row in item.rows):
+        <div class="row">
+        #for(item in row):
+            <!-- <div class="vline"></div> -->
+            #if(item.itemType == "body"):
+                #import("bodyBoxItem")
+            #elseif(item.itemType == "image"):
+                #extend("firstImageBoxItem")
+            #elseif(item.itemType == "clear"):
+                <div class="box phone-hide">
+                    <div></div>
+                </div>
+            #endif
+                <div class="vline"></div>
+        #endfor
+        </div>
+        <div class="hline"></div>
+    #endfor
 
-        #elseif(item.layout == "middleBody"):
-            #extend("firstImageBoxItem")
-            <div class="vline"></div>
-            #import("bodyBoxItem")
-            <div class="vline phone-hide"></div>
-            #extend("secondImageBoxItem")
-
-        #elseif(item.layout == "rightBody"):
-            #extend("firstImageBoxItem")
-            <div class="vline phone-hide"></div>
-            #extend("secondImageBoxItem")
-            <div class="vline"></div>
-            #import("bodyBoxItem")
-
-        #elseif(item.layout == "leftLargeBody"):
-            #import("bodyBoxItem")
-            <div class="vline clear phone-hide"></div>
-            <div class="box phone-hide">
-                <div></div>
-            </div>
-            <div class="vline"></div>
-            #extend("firstImageBoxItem")
-
-        #elseif(item.layout == "rightLargeBody"):
-            #extend("firstImageBoxItem")
-            <div class="vline"></div>
-            #import("bodyBoxItem")
-            <div class="vline clear phone-hide"></div>
-            <div class="box phone-hide">
-                <div></div>
-            </div>
-        #endif
-        <div class="vline"></div>
-    </div>
-    <div class="hline"></div>
 #endfor

@@ -1,3 +1,0 @@
-<div class="box phone-hide">
-	<img src="#(item.secondImageLink)" alt="image"/>
-</div>

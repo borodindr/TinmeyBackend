@@ -1,37 +1,14 @@
 #extend("base"):
 
-	#export("header"):
-		#extend("indexHeader")
+	#export("--header"):
+		#extend("headerIndex")
 	#endexport
 
-	#export("content"):
-	<div class="hline"></div>
-		<div class="row">
-        	<div class="box wide">
-	    		<div class="content">
-		        	<div class="phone-hide"></div>
-		        	<div>
-		            	<h3 class="box-about">#(about)</h3>
-		        	</div>
-		        	<div class="phone-show">
-		        		<a href="/download/resume" class="box-button" target="_blank">Download CV</a>
-		        	</div>
-	    		</div>
-	    	</div>
-    		<div class="vline phone-hide"></div>
-    		<div class="box phone-hide">
-    			<div class="content">
-	        		<div></div>
-		        	<div>
-		            	<a href="/download/resume" class="box-button" target="_blank">Download CV</a>
-		        	</div>
-    			</div>
-    		</div>
-		</div>
-    	<div class="hline"></div>
-		#extend("items"):
-		#export("bodyBoxItem"):
-			#extend("sectionBodyBoxItem")
+	#export("--content"):
+	
+		#extend("objects"):
+		#export("--itemBody"):
+			#extend("itemBodySection")
 		#endexport
 		#endextend
 	#endexport

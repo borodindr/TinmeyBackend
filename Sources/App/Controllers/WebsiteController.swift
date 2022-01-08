@@ -33,12 +33,13 @@ struct WebsiteController: RouteCollection {
                     .flatMap { profile in
                         let meta = WebsiteMeta(title: "Home", profile: profile)
                         let header = IndexHeader(profile: profile)
-                        let items = sections.map(SectionItem.init)
                         let context = IndexContext(
                             meta: meta,
                             header: header,
-                            about: profile.about,
-                            items: items
+                            about: profile.about.replacingOccurrences(of: "\n", with: "<br>"),
+                            objects: sections.map { section in
+                                    .generate(from: .generate(from: section))
+                            }
                         )
                         return req.view.render("index", context)
                     }
@@ -76,7 +77,9 @@ struct WebsiteController: RouteCollection {
                     let context = WorkContext(
                         meta: meta,
                         header: header,
-                        items: try works.map(WorkItem.init)
+                        objects: try works.map {
+                            .generate(from: try .generate(from: $0))
+                        }
                     )
                     return req.view.render("works", context)
                 } catch {
@@ -106,7 +109,9 @@ struct WebsiteController: RouteCollection {
                     let context = WorkContext(
                         meta: meta,
                         header: header,
-                        items: try works.map(WorkItem.init)
+                        objects: try works.map {
+                            .generate(from: try .generate(from: $0))
+                        }
                     )
                     return req.view.render("works", context)
                 } catch {
@@ -213,19 +218,19 @@ struct IndexContext: WebsiteContext {
     let meta: WebsiteMeta
     let header: IndexHeader
     let about: String
-    let items: [SectionItem]
+    let objects: [WebsiteObject<SectionBody>]
 }
 
 struct WorkContext: WebsiteContext {
     let meta: WebsiteMeta
     let header: WorkHeader
-    let items: [WorkItem]
+    let objects: [WebsiteObject<WorkBody>]
 }
 
 // MARK: - Meta
 struct WebsiteMeta: Encodable {
     let canonical: String
-    let siteName: String = "tinmey design"
+    var siteName: String = "tinmey design"
     let title: String
     let author: String
     let description: String
@@ -277,177 +282,142 @@ struct WorkHeader: Header {
 }
 
 // MARK: - Item
-struct SectionItem: Encodable {
-    let rows: [[Item]]
+struct WebsiteObject<Body: Encodable>: Encodable {
+    var rows: [Row]
     
-    struct Item: Encodable {
-        let itemType: ItemType
-        let title: String?
-        let description: String?
-        let buttonDirection: String?
-        let buttonText: String?
-        let imageLink: String?
-        
-        init(
-            itemType: SectionItem.Item.ItemType,
-            title: String? = nil,
-            description: String? = nil,
-            buttonDirection: String? = nil,
-            buttonText: String? = nil,
-            imageLink: String? = nil
-        ) {
-            self.itemType = itemType
-            self.title = title
-            self.description = description
-            self.buttonDirection = buttonDirection
-            self.buttonText = buttonText
-            self.imageLink = imageLink
-        }
-        
-        enum ItemType: String, Encodable {
-            case body
-            case image
-            case clear
-        }
-    }
-    
-    static func makeTwoDArray(from items: [SectionItem.Item]) -> [[SectionItem.Item]] {
+    static func generate(from contents: [Content]) -> Self {
         let columns = 3
         
-        var column = 0
-        var columnIndex = 0
-        var result = [[SectionItem.Item]]()
+        var result = [Row]()
         
-        for item in items {
-            if columnIndex < columns {
-                if columnIndex == 0 {
-                    result.insert([item], at: column)
-                    columnIndex += 1
-                } else {
-                    result[column].append(item)
-                    columnIndex += 1
+        let rowsCount = contents.count / columns
+        
+        for rowIndex in 0..<rowsCount {
+            var items = [Item]()
+            let firstItemIndex = rowIndex * columns
+            let lastItemIndex = firstItemIndex + columns - 1
+            var isPreviousImage = false
+            for itemIndex in firstItemIndex...lastItemIndex {
+                if itemIndex < contents.count {
+                    let indexInRow = itemIndex - rowIndex * columns
+                    let isFirst = indexInRow == 0
+                    let content = contents[itemIndex]
+                    
+                    let leftSep: SeparatorStyle
+                    
+                    if isFirst {
+                        leftSep = .none
+                    } else if content.isImage || isPreviousImage {
+                        leftSep = .fill
+                    } else {
+                        leftSep = .clear
+                    }
+                    
+                    let item = Item(
+                        content: content,
+                        leftSeparator: leftSep
+                    )
+                    items.append(item)
+                    
+                    isPreviousImage = content.isImage
                 }
-            } else {
-                column += 1
-                result.insert([item], at: column)
-                columnIndex = 1
             }
+            
+            let row = Row(items: items, isLast: rowIndex == rowsCount - 1)
+            result.append(row)
         }
-        return result
+        
+        return .init(rows: result)
+    }
+}
+
+extension WebsiteObject {
+    struct Row: Encodable {
+        let items: [Item]
+        let isLast: Bool
+    }
+}
+
+extension WebsiteObject {
+    struct Item: Encodable {
+        let content: Content
+        let leftSeparator: SeparatorStyle
     }
     
-    init(section: Section) {
-        let firstImageItem = Item(itemType: .image, imageLink: "/sections/\(section.type.rawValue)/firstImage")
-        let secondImageItem = Item(itemType: .image, imageLink: "/sections/\(section.type.rawValue)/secondImage")
+    enum Content: Encodable {
+        case body(body: Body)
+        case image(imageLink: String)
+        case clear
+        
+        var isImage: Bool {
+            if case .image = self {
+                return true
+            }
+            return false
+        }
+    }
+    
+    enum SeparatorStyle: String, Encodable {
+        case fill, clear, none
+    }
+}
+
+struct SectionBody: Encodable {
+    let title: String
+    let description: String
+    let buttonDirection: String
+    let buttonText: String
+}
+
+struct WorkBody: Encodable {
+    let title: String
+    let description: String
+    let tags: [String]
+}
+
+extension Array where Element == WebsiteObject<SectionBody>.Content {
+    static func generate(from section: Section) -> [Element] {
+        let firstImageItem = Element.image(imageLink: "/sections/\(section.type.rawValue)/firstImage")
+        let secondImageItem = Element.image(imageLink: "/sections/\(section.type.rawValue)/secondImage")
         
         switch section.type {
         case .covers:
-            let bodyItem = Item(
-                itemType: .body,
+            let bodyItem = Element.body(body: SectionBody(
                 title: section.previewTitle,
                 description: section.previewSubtitle,
                 buttonDirection: "/\(section.type.rawValue)",
                 buttonText: "See covers"
             )
-            self.rows = [[firstImageItem, secondImageItem, bodyItem]]
+            )
+            return [firstImageItem, secondImageItem, bodyItem]
             
         case .layouts:
-            let bodyItem = Item(
-                itemType: .body,
+            let bodyItem = Element.body(body: SectionBody(
                 title: section.previewTitle,
                 description: section.previewSubtitle,
                 buttonDirection: "/\(section.type.rawValue)",
                 buttonText: "See layouts"
             )
-            self.rows = [[firstImageItem, bodyItem, secondImageItem]]
+            )
+            return [firstImageItem, bodyItem, secondImageItem]
             
         }
     }
 }
 
-struct WorkItem: Encodable {
-    let rows: [[Item]]
-    
-    init(work: Work) throws {
-        var list: [WorkItem.Item] = try work.images
+extension Array where Element == WebsiteObject<WorkBody>.Content {
+    static func generate(from work: Work) throws -> [Element] {
+        var list: [Element] = try work.images
             .sorted(by: { $0.sortIndex < $1.sortIndex })
             .map {
-                $0.name == nil ? .clear() : try .image($0)
+                $0.name == nil ? .clear : try .image(imageLink: "/download/work_images/\($0.requireID().uuidString)")
             }
-        list.insert(.body(work), at: work.bodyIndex)
-        self.rows = WorkItem.makeTwoDArray(from: list)
-    }
-    
-    struct Item: Encodable {
-        let itemType: ItemType
-        let title: String?
-        let description: String?
-        let tags: [String]?
-        let imageLink: String?
-        
-        init(
-            itemType: WorkItem.Item.ItemType,
-            title: String? = nil,
-            description: String? = nil,
-            tags: [String]? = nil,
-            imageLink: String? = nil
-        ) {
-            self.itemType = itemType
-            self.title = title
-            self.description = description
-            self.tags = tags
-            self.imageLink = imageLink
-       }
-        
-        static func image(_ image: WorkImage) throws -> Self {
-            try self.init(
-                itemType: .image,
-                imageLink: "/download/work_images/\(image.requireID().uuidString)"
-            )
-        }
-        
-        static func body(_ work: Work) -> Self {
-            self.init(
-                itemType: .body,
-                title: work.title,
-                description: work.description,
-                tags: work.tags.map { $0.name }
-            )
-        }
-        
-        static func clear() -> Self {
-            self.init(itemType: .clear)
-        }
-        
-        enum ItemType: String, Encodable {
-            case body
-            case image
-            case clear
-        }
-    }
-    
-    static func makeTwoDArray(from items: [WorkItem.Item]) -> [[WorkItem.Item]] {
-        let columns = 3
-        
-        var column = 0
-        var columnIndex = 0
-        var result = [[WorkItem.Item]]()
-        
-        for item in items {
-            if columnIndex < columns {
-                if columnIndex == 0 {
-                    result.insert([item], at: column)
-                    columnIndex += 1
-                } else {
-                    result[column].append(item)
-                    columnIndex += 1
-                }
-            } else {
-                column += 1
-                result.insert([item], at: column)
-                columnIndex = 1
-            }
-        }
-        return result
+        let body = WorkBody(
+            title: work.title,
+            description: work.description,
+            tags: work.tags.map { $0.name }
+        )
+        list.insert(.body(body: body), at: work.bodyIndex)
+        return list
     }
 }

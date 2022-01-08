@@ -1,0 +1,6 @@
+<div class="row">
+#for(item in row.items):
+    #extend("itemSeparator")
+    #extend("item")
+#endfor
+</div>

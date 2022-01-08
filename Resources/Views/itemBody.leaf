@@ -1,0 +1,13 @@
+<div class="item body">
+    <div class="vstack">
+        <div>
+            <h2>#(item.content.body.body.title)</h2>
+            <p class="item-description">
+                #unsafeHTML(item.content.body.body.description)
+            </p>
+        </div>
+        <div>
+            #import("--itemBodyContent")
+        </div>
+    </div>
+</div>

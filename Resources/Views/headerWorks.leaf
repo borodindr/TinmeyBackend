@@ -1,0 +1,30 @@
+<div class="item body">
+    <div class="vstack">
+        <h1>#(header.title)</h1>
+        <div class="header-description">
+            <p class="phone-show">
+                #unsafeHTML(header.description)
+            </p>
+        </div>
+        <ul class="tag-list">
+            #for(tag in header.availableTags):
+                #if(tag == header.selectedTag):
+                <li class="tag selected">
+                #else:
+                <li class="tag">
+                #endif
+                    <a href="?tag=#(tag)">#(tag)</a>
+                </li>
+            #endfor
+        </ul>
+    </div>
+</div>
+<div class="vline"></div>
+<div class="item wide body phone-hide">
+    <div class="vstack">
+        <div></div>
+        <p>
+            #unsafeHTML(header.description)
+        </p>
+    </div>
+</div>

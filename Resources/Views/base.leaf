@@ -46,18 +46,18 @@
                 <ul class="links">
                     <li>
                         <a class="icon" href="mailTo:#(meta.email)">
-                            <img class="phone-show" src="mail-icon.png" alt="mail icon">
+                            <img class="phone-show" src="icon-mail.png" alt="mail icon">
                             <div class="email phone-hide">#(meta.email)</div>
                         </a>
                     </li>
                     <li>
                         <a class="icon" href="https://www.instagram.com/tinmeydesign" target="_blank">
-                            <img src="instagram-icon.png" alt="instagram icon">
+                            <img src="icon-instagram.png" alt="instagram icon">
                         </a>
                     </li>
                     <li>
                         <a class="icon" href="https://www.behance.net/katyatinmey" target="_blank">
-                            <img src="behance-icon.png" alt="behance icon">
+                            <img src="icon-behance.png" alt="behance icon">
                         </a>
                     </li>
                 </ul>

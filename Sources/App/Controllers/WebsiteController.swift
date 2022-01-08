@@ -386,7 +386,7 @@ extension Array where Element == WebsiteObject<SectionBody>.Content {
                 title: section.previewTitle,
                 description: section.previewSubtitle,
                 buttonDirection: "/\(section.type.rawValue)",
-                buttonText: "See covers"
+                buttonText: "Show works"
             )
             )
             return [firstImageItem, secondImageItem, bodyItem]
@@ -396,7 +396,7 @@ extension Array where Element == WebsiteObject<SectionBody>.Content {
                 title: section.previewTitle,
                 description: section.previewSubtitle,
                 buttonDirection: "/\(section.type.rawValue)",
-                buttonText: "See layouts"
+                buttonText: "Show works"
             )
             )
             return [firstImageItem, bodyItem, secondImageItem]

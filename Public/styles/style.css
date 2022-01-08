@@ -197,18 +197,16 @@ nav img {
 }
 
 .item-button {
-    color: var(--secondary-text-color);
+    color: var(--text-color);
     font-size: var(--item-button-font-size);
 }
 
 .item-button:link {
     text-decoration: none;
-    
     background-color: var(--button-bg-color);
-    padding: .375rem;
-    border-radius: 2.5px;
+    padding: .375rem .5rem;
+    border-radius: .4rem;
     display: inline-block;
-    border: 0.25px solid var(--secondary-text-color);
 }
 
 .item-button:hover {

@@ -360,17 +360,25 @@ footer a {
         flex-direction: column;
     }
 
-    .item.body {
+    .item {
         height: auto;
+    }
+
+    .item.body {
         order:  -1;
+    }
+
+    .item.image {
+        padding: .5rem;
+        padding-top: 0;
+    }
+
+    .item >img {
+        max-height: calc(var(--row-height) - .5rem);
     }
 
     .item.clear {
         display: none;
-    }
-
-    .item-button {
-        /*margin-top: 1rem;*/
     }
 
     .hline {

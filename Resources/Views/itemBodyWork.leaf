@@ -1,17 +1,15 @@
 #extend("itemBody"):
     #export("--itemBodyContent"):
         <div class="tag-list">
-        <ul>
             #for(tag in item.content.body.body.tags):
                 #if(tag == header.selectedTag):
-                    <li class="tag selected">
+                    <a href="?" class="tag selected">
                 #else:
-                    <li class="tag">
+                    <a href="?tag=#(tag)" class="tag">
                 #endif
-                        <a href="?tag=#(tag)">#(tag)</a>
-                    </li>
+                        #(tag)
+                    </a>
             #endfor
-        </ul>
         </div>
     #endexport
 #endextend

@@ -4,17 +4,17 @@
         <p class="phone-show">
             #unsafeHTML(header.description)
         </p>
-        <ul class="tag-list">
+        <div class="tag-list">
             #for(tag in header.availableTags):
                 #if(tag == header.selectedTag):
-                <li class="tag selected">
+                    <a href="?" class="tag selected">
                 #else:
-                <li class="tag">
+                    <a href="?tag=#(tag)" class="tag">
                 #endif
-                    <a href="?tag=#(tag)">#(tag)</a>
-                </li>
+                        #(tag)
+                    </a>
             #endfor
-        </ul>
+        </div>
     </div>
 </div>
 <div class="vline"></div>

@@ -338,7 +338,7 @@ footer a {
         --separator-large-width: 0.625rem;
 
         --nav-bar-height: 3rem;
-        --nav-bar-padding: 0rem .5rem;
+        --nav-bar-padding: 0rem 1rem;
         --nav-bar-space: 1rem;
         --nav-bar-icon-height: 1.7rem;
         --nav-bar-font-size: 1rem;
@@ -360,17 +360,25 @@ footer a {
         flex-direction: column;
     }
 
-    .item.body {
+    .item {
         height: auto;
+    }
+
+    .item.body {
         order:  -1;
+    }
+
+    .item.image {
+        padding: .5rem;
+        padding-top: 0;
+    }
+
+    .item >img {
+        max-height: calc(var(--row-height) - .5rem);
     }
 
     .item.clear {
         display: none;
-    }
-
-    .item-button {
-        /*margin-top: 1rem;*/
     }
 
     .hline {

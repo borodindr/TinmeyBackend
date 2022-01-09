@@ -1,13 +1,13 @@
 #extend("base"):
 
-	#export("header"):
-		#extend("workHeader")
+	#export("--header"):
+		#extend("headerWorks")
 	#endexport
 
-	#export("content"):
-		#extend("items"):
-		#export("bodyBoxItem"):
-			#extend("workBodyBoxItem")
+	#export("--content"):
+		#extend("objects"):
+		#export("--itemBody"):
+			#extend("itemBodyWork")
 		#endexport
 		#endextend
 	#endexport

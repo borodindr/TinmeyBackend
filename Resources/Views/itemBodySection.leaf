@@ -1,0 +1,7 @@
+#extend("itemBody"):
+    #export("--itemBodyContent"):
+    <a href="#(item.content.body.body.buttonDirection)" class="item-button">
+        #(item.content.body.body.buttonText)
+    </a>
+    #endexport
+#endextend

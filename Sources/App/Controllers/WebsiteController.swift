@@ -36,7 +36,7 @@ struct WebsiteController: RouteCollection {
                         let context = IndexContext(
                             meta: meta,
                             header: header,
-                            about: profile.about.replacingOccurrences(of: "\n", with: "<br>"),
+                            about: profile.about,
                             objects: sections.map { section in
                                     .generate(from: .generate(from: section))
                             }
@@ -219,6 +219,13 @@ struct IndexContext: WebsiteContext {
     let header: IndexHeader
     let about: String
     let objects: [WebsiteObject<SectionBody>]
+    
+    init(meta: WebsiteMeta, header: IndexHeader, about: String, objects: [WebsiteObject<SectionBody>]) {
+        self.meta = meta
+        self.header = header
+        self.about = about.multilineHTML()
+        self.objects = objects
+    }
 }
 
 struct WorkContext: WebsiteContext {
@@ -258,7 +265,7 @@ struct IndexHeader: Header {
     
     init(profile: Profile) {
         self.title = profile.name
-        self.description = profile.shortAbout
+        self.description = profile.shortAbout.multilineHTML()
         self.location = profile.location
     }
 }
@@ -271,7 +278,7 @@ struct WorkHeader: Header {
     
     init(section: Section, availableTags: [String], selectedTag: String?) {
         self.title = section.previewTitle
-        self.description = section.sectionSubtitle
+        self.description = section.sectionSubtitle.multilineHTML()
         self.availableTags = availableTags
         self.selectedTag = selectedTag
     }
@@ -367,12 +374,25 @@ struct SectionBody: Encodable {
     let description: String
     let buttonDirection: String
     let buttonText: String
+    
+    init(title: String, description: String, buttonDirection: String, buttonText: String) {
+        self.title = title.multilineHTML()
+        self.description = description.multilineHTML()
+        self.buttonDirection = buttonDirection
+        self.buttonText = buttonText
+    }
 }
 
 struct WorkBody: Encodable {
     let title: String
     let description: String
     let tags: [String]
+    
+    init(title: String, description: String, tags: [String]) {
+        self.title = title.multilineHTML()
+        self.description = description.multilineHTML()
+        self.tags = tags
+    }
 }
 
 extension Array where Element == WebsiteObject<SectionBody>.Content {
@@ -419,5 +439,11 @@ extension Array where Element == WebsiteObject<WorkBody>.Content {
         )
         list.insert(.body(body: body), at: work.bodyIndex)
         return list
+    }
+}
+
+extension String {
+    func multilineHTML() -> String {
+        self.replacingOccurrences(of: "\n", with: "<br>")
     }
 }

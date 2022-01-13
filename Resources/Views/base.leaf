@@ -25,7 +25,6 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
         <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
         <!-- favicon -->
-        <!-- <link rel="icon" href="/favicon-16.png" sizes="16x16" /> -->
         <link rel="icon" href="/favicon-32.png" sizes="32x32" />
         <link rel="icon" href="/favicon-128.png" sizes="128x128" />
         <link rel="icon" href="/favicon-152.png" sizes="152x152" />
@@ -36,47 +35,52 @@
     </head>
     
     <body>
-        <div class="white-bg">
+        <nav>
+            <div class="wrapper">        
+                <ul class="navigations">
+                    <li><a href="/">                                              Home   </a></li>
+                    <li><a href="/covers">                                        Covers </a></li>
+                    <li><a href="/layouts">                                       Layouts</a></li>
+                    <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog   </a></li>
+                </ul>
+                <ul class="links">
+                    <li>
+                        <a class="icon" href="mailTo:#(meta.email)">
+                            <img class="phone-show" src="icon-mail.png" alt="mail icon">
+                            <div class="email phone-hide">#(meta.email)</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="icon" href="https://www.instagram.com/tinmeydesign" target="_blank">
+                            <img src="icon-instagram.png" alt="instagram icon">
+                        </a>
+                    </li>
+                    <li>
+                        <a class="icon" href="https://www.behance.net/katyatinmey" target="_blank">
+                            <img src="icon-behance.png" alt="behance icon">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <header>
             <div class="wrapper">
-                <nav>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/covers">Covers</a></li>
-                        <li><a href="/layouts">Layouts</a></li>
-                    </ul>
-                    <ul>
-                        <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog</a></li>
-                        <li>
-                            <a href="mailTo:#(meta.email)">
-                                <div class="email">#(meta.email)</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="icon" href="https://www.instagram.com/tinmeydesign" target="_blank">
-                                <img src="instagram-icon.png" alt="instagram icon">
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://www.behance.net/katyatinmey" target="_blank">
-                                <img src="behance-icon.png" alt="behance icon">
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                <div class="hline-large"></div>
+                <div class="row">
+                    #import("--header")
+                </div>
             </div>
-        </div>
+        </header>
         <div class="wrapper">
-            <div class="hline-large"></div>
-            <div class="row">
-                #import("header")
-            </div>
-        </div>
-        <div class="wrapper">
-            #import("content")
+            #import("--content")
         </div>
         <footer>
-            <p>© 2022 tinmey design</p>
-            <p>Developed by <a href="https://www.dmitry-borodin.com" target="_blank">Dmitry Borodin</a></p>
+            <p>
+                © 2022 tinmey design
+                <br>
+                Developed by <a href="https://www.dmitry-borodin.com" target="_blank">Dmitry Borodin</a>
+            </p>
         </footer>
     </body>
     

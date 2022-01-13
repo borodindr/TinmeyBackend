@@ -1,0 +1,5 @@
+#if(item.leftSeparator == "fill"):
+    <div class="vline"></div>
+#elseif(item.leftSeparator == "clear"):
+    <div class="vline clear"></div>
+#endif

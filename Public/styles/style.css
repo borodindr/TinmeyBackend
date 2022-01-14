@@ -213,7 +213,6 @@ nav img {
     padding: .375rem .5rem;
     border-radius: .4rem;
     display: inline-block;
-    
 }
 
 .item-button:hover {
@@ -257,8 +256,6 @@ nav img {
     color: var(--text-color);
     background-color: var(--tag-bg-color);
 }
-
-
 
 .hline {
     height: var(--separator-width);

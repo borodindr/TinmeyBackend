@@ -11,8 +11,8 @@
     --bg-color: #F2EDEE;
     --nav-bar-bg-color: #FA7D7D;
     --item-bg-color: #F4C2C1;
-    --button-bg-color: #F2EDEE;
-    --button-hover-bg-color: #FA7D7D;
+    --button-bg-color: #FA7D7D;
+    --button-hover-bg-color: #F2EDEE;
     --separator-color: #F2EDEE;
     --tag-bg-color: #F2EDEE;
     --tag-selected-bg-color: #FA7D7D;
@@ -203,7 +203,7 @@ nav img {
 }
 
 .item-button {
-    color: var(--text-color);
+    color: white;
     font-size: var(--item-button-font-size);
 }
 
@@ -213,11 +213,12 @@ nav img {
     padding: .375rem .5rem;
     border-radius: .4rem;
     display: inline-block;
+    
 }
 
 .item-button:hover {
     background-color: var(--button-hover-bg-color);
-    color: white;
+    color: var(--text-color);
 }
 
 

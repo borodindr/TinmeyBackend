@@ -15,7 +15,7 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto.git", from: "5.0.0"),
         .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
         .package(
-            url: "https://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:x-oauth-basic@github.com/borodindr/TinmeyCore.git",
+            url: "https://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:x-oauth-basic@github.com/borodindr/TinmeyCore.git",
 //            .branch("staging")
             from: "0.0.0"
         )

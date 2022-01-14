@@ -14,7 +14,7 @@
             </div>
             #if(item.content.body.body.seeMoreLink):
                 <div>
-                    <a href="#(item.content.body.body.seeMoreLink)" class="item-button">
+                    <a href="#(item.content.body.body.seeMoreLink)" class="item-button" target="_blank">
                         Show more
                     </a>
                 </div>

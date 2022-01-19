@@ -48,6 +48,28 @@ extension Tag {
             }
     }
     
+    static func add(_ names: [String], to work: Work, on req: Request) -> EventLoopFuture<Void> {
+        names
+            .map { tagName in
+                Tag.add(tagName, to: work, on: req)
+            }
+            .flatten(on: req.eventLoop)
+    }
+    
+    static func delete(_ tag: Tag, from work: Work, on req: Request) -> EventLoopFuture<Void> {
+        work.$tags.detach(tag, on: req.db)
+            .flatMap {
+                tag.$works.load(on: req.db)
+            }
+            .flatMap {
+                if tag.works.isEmpty || tag.works.map({ $0.id }) == [work.id] {
+                    return tag.delete(on: req.db)
+                } else {
+                    return req.eventLoop.makeSucceededVoidFuture()
+                }
+            }
+    }
+    
     static func delete(_ name: String, from work: Work, on req: Request) -> EventLoopFuture<Void> {
         Tag.query(on: req.db)
             .filter(\.$name == name)
@@ -56,24 +78,32 @@ extension Tag {
                 guard let foundTag = foundTag else {
                     return req.eventLoop.makeSucceededFuture(())
                 }
-                return work.$tags.detach(foundTag, on: req.db)
+                return Tag.delete(foundTag, from: work, on: req)
             }
+            
     }
     
-    static func add(_ tags: [String], to work: Work, on req: Request) -> EventLoopFuture<Void> {
+    static func delete(_ tags: [Tag], from work: Work, on req: Request) -> EventLoopFuture<Void> {
         tags
-            .map { tagName in
-                Tag.add(tagName, to: work, on: req)
+            .map { tag in
+                Tag.delete(tag, from: work, on: req)
             }
             .flatten(on: req.eventLoop)
     }
     
-    static func delete(_ tags: [String], from work: Work, on req: Request) -> EventLoopFuture<Void> {
-        tags
+    static func delete(_ names: [String], from work: Work, on req: Request) -> EventLoopFuture<Void> {
+        names
             .map { tagName in
                 Tag.delete(tagName, from: work, on: req)
             }
             .flatten(on: req.eventLoop)
+    }
+    
+    static func deleteAll(from work: Work, on req: Request) -> EventLoopFuture<Void> {
+        work.$tags.query(on: req.db).all()
+            .flatMap {
+                Tag.delete($0, from: work, on: req)
+            }
     }
     
     static func update(to newTags: [String], in work: Work, on req: Request) -> EventLoopFuture<Void> {
@@ -86,7 +116,7 @@ extension Tag {
                 let tagsToAdd = newTagsSet.subtracting(existingTagsSet).map { $0 }
                 
                 return [delete(tagsToDelete, from: work, on: req),
-                 add(tagsToAdd, to: work, on: req)]
+                        add(tagsToAdd, to: work, on: req)]
                     .flatten(on: req.eventLoop)
             }
     }

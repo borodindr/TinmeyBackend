@@ -417,8 +417,8 @@ extension Array where Element == WebsiteObject<SectionBody>.Content {
             let bodyItem = Element.body(body: SectionBody(
                 title: section.previewTitle,
                 description: section.previewSubtitle,
-                buttonDirection: "/\(section.type.rawValue)",
-                buttonText: "Show works"
+                buttonDirection: "https://www.behance.net/gallery/61774655/Japanese-book-design",//"/\(section.type.rawValue)",
+                buttonText: "Behance"//"Show works"
             )
             )
             return [firstImageItem, bodyItem, .clear]

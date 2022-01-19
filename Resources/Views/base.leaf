@@ -40,7 +40,7 @@
                 <ul class="navigations">
                     <li><a href="/">                                              Home   </a></li>
                     <li><a href="/covers">                                        Covers </a></li>
-                    <li><a href="/layouts">                                       Layouts</a></li>
+                    <!-- <li><a href="/layouts">                                       Layouts</a></li> -->
                     <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog   </a></li>
                 </ul>
                 <ul class="links">

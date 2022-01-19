@@ -99,25 +99,6 @@ extension Work {
 //extension Work: TwoImagesContainer { }
 
 extension Work {
-    func deleteUnusedTags(on req: Request) -> EventLoopFuture<Void> {
-        let workID: IDValue
-        do {
-            workID = try requireID()
-        } catch {
-            return req.eventLoop.makeFailedFuture(error)
-        }
-        return $tags.query(on: req.db)
-            .with(\.$works)
-            .all()
-            .flatMap { tags in
-                tags.filter { tag in
-                    tag.works.isEmpty || tag.works.map { $0.id } == [workID]
-                }
-                .map { $0.delete(on: req.db) }
-                .flatten(on: req.eventLoop)
-            }
-    }
-    
     func deleteImages(on req: Request) -> EventLoopFuture<Void> {
         $images.query(on: req.db)
             .all()

@@ -421,7 +421,7 @@ extension Array where Element == WebsiteObject<SectionBody>.Content {
                 buttonText: "Show works"
             )
             )
-            return [firstImageItem, bodyItem, secondImageItem]
+            return [firstImageItem, bodyItem, .clear]
             
         }
     }

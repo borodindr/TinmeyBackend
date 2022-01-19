@@ -71,10 +71,12 @@ struct WorksController: RouteCollection {
             .unwrap(or: Abort(.notFound))
             .flatMap { work -> EventLoopFuture<Int> in
                 let sortIndex = work.sortIndex
-                return [work.deleteImages(on: req),
-                        work.deleteUnusedTags(on: req),
-                        work.delete(on: req.db)]
+                return [Tag.deleteAll(from: work, on: req),
+                        work.deleteImages(on: req)]
                     .flatten(on: req.eventLoop)
+                    .flatMap {
+                        work.delete(on: req.db)
+                    }
                     .map { sortIndex }
             }
             .flatMap { deletedSortIndex in

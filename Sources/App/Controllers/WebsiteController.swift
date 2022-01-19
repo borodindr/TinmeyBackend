@@ -387,11 +387,13 @@ struct WorkBody: Encodable {
     let title: String
     let description: String
     let tags: [String]
+    var seeMoreLink: String?
     
-    init(title: String, description: String, tags: [String]) {
+    init(title: String, description: String, tags: [String], seeMoreLink: String?) {
         self.title = title.multilineHTML()
         self.description = description.multilineHTML()
         self.tags = tags
+        self.seeMoreLink = seeMoreLink
     }
 }
 
@@ -435,7 +437,8 @@ extension Array where Element == WebsiteObject<WorkBody>.Content {
         let body = WorkBody(
             title: work.title,
             description: work.description,
-            tags: work.tags.map { $0.name }
+            tags: work.tags.map { $0.name },
+            seeMoreLink: work.seeMoreLink
         )
         list.insert(.body(body: body), at: work.bodyIndex)
         return list

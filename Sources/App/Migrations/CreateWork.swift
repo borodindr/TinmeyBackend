@@ -70,10 +70,7 @@ extension Work {
 }
 
 extension Work {
-    enum WorkType {
-        case cover
-        case layout
-    }
+    enum WorkType { }
 }
 
 extension Work.WorkType {

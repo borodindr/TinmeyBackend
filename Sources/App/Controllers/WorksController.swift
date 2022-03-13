@@ -44,9 +44,7 @@ struct WorksController: RouteCollection {
     }
     
     func getAllHandler(_ req: Request) async throws -> [WorkAPIModel] {
-        let type = try Work.WorkType.detect(from: req)
         let query = Work.query(on: req.db)
-            .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
         let works = try await query.all()
         return try await works.convertToAPIModel(on: req.db)
@@ -60,9 +58,8 @@ struct WorksController: RouteCollection {
     }
     
     func createHandler(_ req: Request) async throws -> WorkAPIModel {
-        let type = try Work.WorkType.detect(from: req)
         let createWork = try req.content.decode(WorkAPIModel.Create.self)
-        let work = try await createWork.create(on: req, type: type)
+        let work = try await createWork.create(on: req)
         return try await work.convertToAPIModel(on: req.db)
     }
     
@@ -93,8 +90,6 @@ struct WorksController: RouteCollection {
         }
         work.title = updatedWorkData.title
         work.description = updatedWorkData.description
-        work.seeMoreLink = updatedWorkData.seeMoreLink?.absoluteString
-        work.bodyIndex = updatedWorkData.bodyIndex
         try await work.save(on: req.db)
         try await Tag.update(to: updatedWorkData.tags, in: work, on: req)
         try await work.updateImages(to: updatedWorkData.images, on: req)
@@ -206,14 +201,4 @@ private extension WorksController {
         return req.fileio.streamFile(at: path)
     }
     
-}
-
-private extension WorksController {
-    func workType(from req: Request) throws -> Work.WorkType {
-        guard let typeKey = req.query[String.self, at: "type"],
-              let type = Work.WorkType(rawValue: typeKey) else {
-            throw Abort(.badRequest, reason: "Work type should be passed as query parameter: 'type={typeKey}'")
-        }
-        return type
-    }
 }

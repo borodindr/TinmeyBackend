@@ -22,22 +22,18 @@ extension WorkAPIModel: Content { }
 extension WorkAPIModel.ReorderDirection: Content { }
 
 extension WorkAPIModel.Create {
-    func makeWork(type: Work.WorkType, sortIndex: Int) -> Work {
+    func makeWork(sortIndex: Int) -> Work {
         Work(
             sortIndex: sortIndex,
-            type: type,
             title: title,
-            description: description,
-            seeMoreLink: seeMoreLink?.absoluteString,
-            bodyIndex: bodyIndex
+            description: description
         )
     }
 }
 
 extension WorkAPIModel.Create {
-    func create(on req: Request, type: Work.WorkType) -> EventLoopFuture<Work> {
+    func create(on req: Request) -> EventLoopFuture<Work> {
         Work.query(on: req.db)
-            .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .first()
             .map { lastWork -> Int in
@@ -47,7 +43,7 @@ extension WorkAPIModel.Create {
                     return 0
                 }
             }
-            .map { makeWork(type: type, sortIndex: $0) }
+            .map { makeWork(sortIndex: $0) }
             .flatMap { work -> EventLoopFuture<Work> in
                 work.save(on: req.db).map { work }
             }
@@ -61,8 +57,8 @@ extension WorkAPIModel.Create {
             }
     }
     
-    func create(on req: Request, type: Work.WorkType) async throws -> Work {
-        try await create(on: req, type: type).get()
+    func create(on req: Request) async throws -> Work {
+        try await create(on: req).get()
     }
 }
 
@@ -77,21 +73,15 @@ extension Work {
                     .map { (_, images) in (work, images) }
             }
             .flatMapThrowing { work, images in
-                let seeMoreLink: URL?
-                if let linkString = work.seeMoreLink {
-                    seeMoreLink = URL(string: linkString)
-                } else {
-                    seeMoreLink = nil
-                }
-                return try WorkAPIModel(
+                try WorkAPIModel(
                     id: work.requireID(),
                     createdAt: work.$createdAt.orThrow(),
                     updatedAt: work.$updatedAt.orThrow(),
                     title: work.title,
                     description: work.description,
                     tags: work.tags.map { $0.name },
-                    seeMoreLink: seeMoreLink,
-                    bodyIndex: work.bodyIndex,
+                    seeMoreLink: nil,
+                    bodyIndex: 0,
                     images: images.map(WorkAPIModel.Image.init)
                 )
             }

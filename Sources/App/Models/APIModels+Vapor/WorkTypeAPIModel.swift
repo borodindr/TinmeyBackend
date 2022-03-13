@@ -8,13 +8,3 @@
 import Foundation
 import TinmeyCore
 
-extension WorkAPIModel.WorkType {
-    var forSchema: Work.WorkType {
-        switch self {
-        case .cover:
-            return .cover
-        case .layout:
-            return .layout
-        }
-    }
-}

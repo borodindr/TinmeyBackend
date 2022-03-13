@@ -69,6 +69,13 @@ extension Work {
     }
 }
 
+extension Work {
+    enum WorkType {
+        case cover
+        case layout
+    }
+}
+
 extension Work.WorkType {
     enum v2021_11_04 {
         static let enumName = "work_type"

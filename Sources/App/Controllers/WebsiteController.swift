@@ -45,13 +45,9 @@ struct WebsiteController: RouteCollection {
         guard let section = try await sectionQuery.first() else {
             throw Abort(.notFound)
         }
-//        async let sectionFuture = Section.query(on: req.db)
-//            .filter(\.$type == .covers)
-//            .first()
-//            .unwrap(or: Abort(.notFound))
         
         let tagName = req.query[String.self, at: "tag"]
-        async let works = worksFuture(req, type: .cover, tagName: tagName)
+        async let works = worksFuture(req, tagName: tagName)
         async let tags = Tag.query(on: req.db).all()
         async let profile = getMainProfile(req)
         
@@ -78,7 +74,7 @@ struct WebsiteController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        async let works = allWorksFuture(req, type: .layout)
+        async let works = allWorksFuture(req)
         async let profile = getMainProfile(req)
         let meta = try await WebsiteMeta(title: "Layouts", profile: profile)
         let header = WorkHeader(section: section)
@@ -126,17 +122,9 @@ struct WebsiteController: RouteCollection {
         return profile
     }
     
-    func workType(from req: Request) throws -> Work.WorkType {
-        guard let typeKey = req.parameters.get("workType"),
-              let type = Work.WorkType(rawValue: typeKey) else {
-            throw Abort(.badRequest, reason: "Wrong work type")
-        }
-        return type
-    }
-    
-    func worksFuture(_ req: Request, type: Work.WorkType, tagName: String?) async throws -> [Work] {
+    func worksFuture(_ req: Request, tagName: String?) async throws -> [Work] {
         guard let tagName = tagName else {
-            return try await allWorksFuture(req, type: type)
+            return try await allWorksFuture(req)
         }
         let query = Tag.query(on: req.db).filter(\.$name == tagName)
         guard let tag = try await query.first() else {
@@ -150,9 +138,8 @@ struct WebsiteController: RouteCollection {
             .all()
     }
     
-    func allWorksFuture(_ req: Request, type: Work.WorkType) async throws -> [Work] {
+    func allWorksFuture(_ req: Request) async throws -> [Work] {
         try await Work.query(on: req.db).with(\.$tags).with(\.$images)
-            .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .all()
     }
@@ -343,13 +330,11 @@ struct WorkBody: Encodable {
     let title: String
     let description: String
     let tags: [String]
-    var seeMoreLink: String?
     
-    init(title: String, description: String, tags: [String], seeMoreLink: String?) {
+    init(title: String, description: String, tags: [String]) {
         self.title = title.multilineHTML()
         self.description = description.multilineHTML()
         self.tags = tags
-        self.seeMoreLink = seeMoreLink
     }
 }
 
@@ -393,10 +378,9 @@ extension Array where Element == WebsiteObject<WorkBody>.Content {
         let body = WorkBody(
             title: work.title,
             description: work.description,
-            tags: work.tags.map { $0.name },
-            seeMoreLink: work.seeMoreLink
+            tags: work.tags.map { $0.name }
         )
-        list.insert(.body(body: body), at: work.bodyIndex)
+        list.insert(.body(body: body), at: 0)
         return list
     }
 }

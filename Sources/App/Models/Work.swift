@@ -24,20 +24,11 @@ final class Work: Model, Content {
     @Timestamp(key: v2021_11_04.updatedAt, on: .update, format: .iso8601)
     var updatedAt: Date?
     
-    @Enum(key: v2021_11_04.type)
-    var type: WorkType
-    
     @Field(key: v2021_11_04.title)
     var title: String
     
     @Field(key: v2021_11_04.description)
     var description: String
-    
-    @OptionalField(key: v2021_11_04.seeMoreLink)
-    var seeMoreLink: String?
-    
-    @Field(key: v2021_12_30.bodyIndex)
-    var bodyIndex: Int
     
     @Siblings(through: WorkTagPivot.self, from: \.$work, to: \.$tag)
     var tags: [Tag]
@@ -52,21 +43,15 @@ final class Work: Model, Content {
         sortIndex: Int,
         createdAt: Date? = nil,
         updatedAt: Date? = nil,
-        type: WorkType,
         title: String,
-        description: String,
-        seeMoreLink: String?,
-        bodyIndex: Int
+        description: String
     ) {
         self.id = id
         self.sortIndex = sortIndex
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.type = type
         self.title = title
         self.description = description
-        self.seeMoreLink = seeMoreLink
-        self.bodyIndex = bodyIndex
     }
 }
 
@@ -77,22 +62,6 @@ extension Work {
         case rightBody
         case leftLargeBody
         case rightLargeBody
-    }
-    
-    enum WorkType: String, Content {
-        case cover
-        case layout
-        
-        // TODO: Make protocol which creates object from path parameters.
-        
-        static func detect(from req: Request) throws -> WorkType {
-            guard let workTypeRawValue = req.parameters.get("workType"),
-                  let workType = WorkType(rawValue: workTypeRawValue) else {
-                throw Abort(.badRequest, reason: "Wrong work type")
-            }
-            
-            return workType
-        }
     }
 }
 

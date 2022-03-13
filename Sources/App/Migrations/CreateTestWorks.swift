@@ -18,7 +18,7 @@ struct CreateTestWorks: Migration {
             bodyIndex: 0,
             images: [.init(id: nil), .init(id: nil)]
         )
-            .makeWork(type: .cover, sortIndex: 0)
+            .makeWork(sortIndex: 0)
             .save(on: database)
     }
 

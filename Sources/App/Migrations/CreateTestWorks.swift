@@ -14,8 +14,6 @@ struct CreateTestWorks: Migration {
             title: "A",
             description: "A",
             tags: ["tag"],
-            seeMoreLink: nil,
-            bodyIndex: 0,
             images: [.init(id: nil), .init(id: nil)]
         )
             .makeWork(sortIndex: 0)

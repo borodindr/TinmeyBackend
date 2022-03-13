@@ -80,8 +80,6 @@ extension Work {
                     title: work.title,
                     description: work.description,
                     tags: work.tags.map { $0.name },
-                    seeMoreLink: nil,
-                    bodyIndex: 0,
                     images: images.map(WorkAPIModel.Image.init)
                 )
             }

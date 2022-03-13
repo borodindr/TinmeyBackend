@@ -96,8 +96,6 @@ extension Work {
     }
 }
 
-//extension Work: TwoImagesContainer { }
-
 extension Work {
     func deleteImages(on req: Request) -> EventLoopFuture<Void> {
         $images.query(on: req.db)
@@ -113,6 +111,10 @@ extension Work {
                 }
             }
             .flatMap { $0.flatten(on: req.eventLoop) }
+    }
+    
+    func deleteImages(on req: Request) async throws {
+        try await deleteImages(on: req).get()
     }
     
     func updateImages(to newImages: [WorkAPIModel.Image.Create], on req: Request) -> EventLoopFuture<Void> {
@@ -159,5 +161,9 @@ extension Work {
                 }
                 
             }
+    }
+    
+    func updateImages(to newImages: [WorkAPIModel.Image.Create], on req: Request) async throws {
+        try await updateImages(to: newImages, on: req).get()
     }
 }

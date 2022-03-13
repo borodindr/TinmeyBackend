@@ -24,147 +24,106 @@ struct WebsiteController: RouteCollection {
         routes.get("download", "resume", use: downloadResumeHandler)
     }
     
-    func indexHandler(_ req: Request) -> EventLoopFuture<View> {
-        Section.query(on: req.db)
-            .sort(\.$sortIndex, .ascending)
-            .all()
-            .flatMap { sections in
-                getMainProfile(req)
-                    .flatMap { profile in
-                        let meta = WebsiteMeta(title: "Home", profile: profile)
-                        let header = IndexHeader(profile: profile)
-                        let context = IndexContext(
-                            meta: meta,
-                            header: header,
-                            about: profile.about,
-                            objects: sections.map { section in
-                                    .generate(from: .generate(from: section))
-                            }
-                        )
-                        return req.view.render("index", context)
-                    }
+    func indexHandler(_ req: Request) async throws -> View {
+        let sections = try await Section.query(on: req.db).sort(\.$sortIndex, .ascending).all()
+        let profile = try await getMainProfile(req)
+        let meta = WebsiteMeta(title: "Home", profile: profile)
+        let header = IndexHeader(profile: profile)
+        let context = IndexContext(
+            meta: meta,
+            header: header,
+            about: profile.about,
+            objects: sections.map { section in
+                    .generate(from: .generate(from: section))
             }
+        )
+        return try await req.view.render("index", context)
     }
     
-    func coversHandler(_ req: Request) throws -> EventLoopFuture<View> {
-        let sectionFuture = Section.query(on: req.db)
-            .filter(\.$type == .covers)
-            .first()
-            .unwrap(or: Abort(.notFound))
+    func coversHandler(_ req: Request) async throws -> View {
+        let sectionQuery = Section.query(on: req.db).filter(\.$type == .covers)
+        guard let section = try await sectionQuery.first() else {
+            throw Abort(.notFound)
+        }
+//        async let sectionFuture = Section.query(on: req.db)
+//            .filter(\.$type == .covers)
+//            .first()
+//            .unwrap(or: Abort(.notFound))
         
         let tagName = req.query[String.self, at: "tag"]
-        let worksFuture = worksFuture(req, type: .cover, tagName: tagName)
+        async let works = worksFuture(req, type: .cover, tagName: tagName)
+        async let tags = Tag.query(on: req.db).all()
+        async let profile = getMainProfile(req)
         
-        let tagsFuture = Tag.query(on: req.db)
-            .all()
-        
-        return EventLoopFuture
-            .combine(
-                sectionFuture,
-                worksFuture,
-                tagsFuture,
-                getMainProfile(req)
-            )
-            .flatMap { (section, works, tags, profile) in
-                let meta = WebsiteMeta(title: "Covers", profile: profile)
-                let availableTags = tags.map { $0.name }
-                let header = WorkHeader(
-                    section: section,
-                    availableTags: availableTags,
-                    selectedTag: tagName
-                )
-                do {
-                    let context = WorkContext(
-                        meta: meta,
-                        header: header,
-                        objects: try works.map {
-                            .generate(from: try .generate(from: $0))
-                        }
-                    )
-                    return req.view.render("works", context)
-                } catch {
-                    return indexHandler(req)
-                }
+        let meta = try await WebsiteMeta(title: "Covers", profile: profile)
+        let availableTags = try await tags.map { $0.name }
+        let header = WorkHeader(
+            section: section,
+            availableTags: availableTags,
+            selectedTag: tagName
+        )
+        let context = await WorkContext(
+            meta: meta,
+            header: header,
+            objects: try works.map {
+                .generate(from: try .generate(from: $0))
             }
+        )
+        return try await req.view.render("works", context)
     }
     
-    func layoutsHandler(_ req: Request) throws -> EventLoopFuture<View> {
-        let sectionFuture = Section.query(on: req.db)
-            .filter(\.$type == .layouts)
-            .first()
-            .unwrap(or: Abort(.notFound))
+    func layoutsHandler(_ req: Request) async throws -> View {
+        let sectionQuery = Section.query(on: req.db).filter(\.$type == .layouts)
+        guard let section = try await sectionQuery.first() else {
+            throw Abort(.notFound)
+        }
         
-        let worksFuture = allWorksFuture(req, type: .layout)
-        
-        return EventLoopFuture
-            .combine(
-                sectionFuture,
-                worksFuture,
-                getMainProfile(req)
-            )
-            .flatMap { section, works, profile in
-                let meta = WebsiteMeta(title: "Layouts", profile: profile)
-                let header = WorkHeader(section: section)
-                do {
-                    let context = WorkContext(
-                        meta: meta,
-                        header: header,
-                        objects: try works.map {
-                            .generate(from: try .generate(from: $0))
-                        }
-                    )
-                    return req.view.render("works", context)
-                } catch {
-                    return indexHandler(req)
-                }
+        async let works = allWorksFuture(req, type: .layout)
+        async let profile = getMainProfile(req)
+        let meta = try await WebsiteMeta(title: "Layouts", profile: profile)
+        let header = WorkHeader(section: section)
+        let context = await WorkContext(
+            meta: meta,
+            header: header,
+            objects: try works.map {
+                .generate(from: try .generate(from: $0))
             }
+        )
+        return try await req.view.render("works", context)
     }
     
-    func getSectionImageHandler(_ req: Request) throws -> EventLoopFuture<Response> {
+    func getSectionImageHandler(_ req: Request) async throws -> Response {
         let sectionType = try Section.SectionType.detect(from: req)
         let imageType = try ImageType.detect(from: req)
-        
-        return Section.query(on: req.db)
-            .filter(\.$type == sectionType)
-            .first()
-            .unwrap(or: Abort(.notFound))
-            .flatMapThrowing { section in
-                try imageType.imageName(in: section)
-            }
-            .flatMap { imageName in
-                req.fileHandler.download(imageName, at: sectionsImageFolder)
-            }
+        let sectionQuery = Section.query(on: req.db).filter(\.$type == sectionType)
+        guard let section = try await sectionQuery.first() else {
+            throw Abort(.notFound)
+        }
+        let imageName = try imageType.imageName(in: section)
+        return try await req.fileHandler.download(imageName, at: sectionsImageFolder)
     }
     
-    func getWorkImageHandler(_ req: Request) throws -> EventLoopFuture<Response> {
-        WorkImage.find(req.parameters.get("imageID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { image in
-                guard let filename = image.name else {
-                    let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-                    return req.eventLoop.makeFailedFuture(Abort(.notFound, reason: reason))
-                }
-                let path: [String]
-                do {
-                    path = try FilePathBuilder().workImagePath(for: image)
-                } catch {
-                    return req.eventLoop.makeFailedFuture(error)
-                }
-                return req.fileHandler.download(filename, at: path)
-            }
+    func getWorkImageHandler(_ req: Request) async throws -> Response {
+        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        guard let filename = image.name else {
+            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
+            throw Abort(.notFound, reason: reason)
+        }
+        let path = try FilePathBuilder().workImagePath(for: image)
+        return try await req.fileHandler.download(filename, at: path)
     }
     
-    func getMainProfile(_ req: Request) -> EventLoopFuture<Profile> {
-        User.query(on: req.db)
-            .filter(\.$isMain == true)
-            .first()
-            .unwrap(or: Abort(.notFound))
-            .flatMap { mainUser in
-                mainUser.$profile
-                    .get(on: req.db)
-                    .map { $0.first }
-                    .unwrap(or: Abort(.notFound))
-            }
+    func getMainProfile(_ req: Request) async throws -> Profile {
+        let query = User.query(on: req.db).filter(\.$isMain == true)
+        guard let mainUser = try await query.first() else {
+            throw Abort(.notFound)
+        }
+        guard let profile = try await mainUser.$profile.get(on: req.db).first else {
+            throw Abort(.notFound)
+        }
+        return profile
     }
     
     func workType(from req: Request) throws -> Work.WorkType {
@@ -175,34 +134,31 @@ struct WebsiteController: RouteCollection {
         return type
     }
     
-    func worksFuture(_ req: Request, type: Work.WorkType, tagName: String?) -> EventLoopFuture<[Work]> {
-        if let tagName = tagName {
-            return Tag.query(on: req.db)
-                .filter(\.$name == tagName)
-                .first()
-                .unwrap(or: Abort(.notFound))
-                .flatMap { tag in
-                    tag.$works
-                        .query(on: req.db)
-                        .sort(\.$sortIndex, .descending)
-                        .with(\.$tags)
-                        .with(\.$images)
-                        .all()
-                }
-        } else {
-            return allWorksFuture(req, type: type)
+    func worksFuture(_ req: Request, type: Work.WorkType, tagName: String?) async throws -> [Work] {
+        guard let tagName = tagName else {
+            return try await allWorksFuture(req, type: type)
         }
+        let query = Tag.query(on: req.db).filter(\.$name == tagName)
+        guard let tag = try await query.first() else {
+            throw Abort(.notFound)
+        }
+        return try await tag.$works
+            .query(on: req.db)
+            .sort(\.$sortIndex, .descending)
+            .with(\.$tags)
+            .with(\.$images)
+            .all()
     }
     
-    func allWorksFuture(_ req: Request, type: Work.WorkType) -> EventLoopFuture<[Work]> {
-        Work.query(on: req.db).with(\.$tags).with(\.$images)
+    func allWorksFuture(_ req: Request, type: Work.WorkType) async throws -> [Work] {
+        try await Work.query(on: req.db).with(\.$tags).with(\.$images)
             .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
             .all()
     }
     
-    func downloadResumeHandler(_ req: Request) -> EventLoopFuture<Response> {
-        req.fileHandler.download(resumeName, at: resumeFolder)
+    func downloadResumeHandler(_ req: Request) async throws -> Response {
+        try await req.fileHandler.download(resumeName, at: resumeFolder)
     }
 }
 

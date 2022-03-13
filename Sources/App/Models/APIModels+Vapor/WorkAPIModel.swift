@@ -21,21 +21,6 @@ extension TimestampProperty {
 extension WorkAPIModel: Content { }
 extension WorkAPIModel.ReorderDirection: Content { }
 
-//extension WorkAPIModel {
-//    init(_ work: Work) throws {
-//        try self.init(
-//            id: work.requireID(),
-//            createdAt: work.$createdAt.orThrow(),
-//            updatedAt: work.$updatedAt.orThrow(),
-////            title: work.title,
-////            description: work.description,
-//            items: work.items.map(WorkAPIModel.Item.init)
-////            seeMoreLink: seeMoreLink,
-////            tags: work.tags.map { $0.name }
-//        )
-//    }
-//}
-
 extension WorkAPIModel.Create {
     func makeWork(type: Work.WorkType, sortIndex: Int) -> Work {
         Work(
@@ -75,15 +60,11 @@ extension WorkAPIModel.Create {
                     .map { work }
             }
     }
-}
-
-extension EventLoopFuture where Value == WorkAPIModel.Create {
-    func create(on req: Request, type: Work.WorkType) -> EventLoopFuture<Work> {
-        flatMap { $0.create(on: req, type: type) }
+    
+    func create(on req: Request, type: Work.WorkType) async throws -> Work {
+        try await create(on: req, type: type).get()
     }
 }
-
-
 
 extension Work {
     func convertToAPIModel(on database: Database) -> EventLoopFuture<WorkAPIModel> {
@@ -115,18 +96,18 @@ extension Work {
                 )
             }
     }
-}
-
-extension EventLoopFuture where Value == Work {
-    func convertToAPIModel(on db: Database) -> EventLoopFuture<WorkAPIModel> {
-        flatMap { $0.convertToAPIModel(on: db) }
+    
+    func convertToAPIModel(on database: Database) async throws-> WorkAPIModel {
+        try await convertToAPIModel(on: database).get()
     }
 }
 
-extension EventLoopFuture where Value == [Work] {
-    func convertToAPIModel(on db: Database) -> EventLoopFuture<[WorkAPIModel]> {
-        flatMapEach(on: db.eventLoop) {
-            $0.convertToAPIModel(on: db)
-        }
+extension Array where Element == Work {
+    func convertToAPIModel(on database: Database) async throws -> [WorkAPIModel] {
+        try await database.eventLoop.future(self)
+            .flatMapEach(on: database.eventLoop) {
+                $0.convertToAPIModel(on: database)
+            }
+            .get()
     }
 }

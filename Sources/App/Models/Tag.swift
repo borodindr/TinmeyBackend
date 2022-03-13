@@ -106,6 +106,10 @@ extension Tag {
             }
     }
     
+    static func deleteAll(from work: Work, on req: Request) async throws {
+        try await deleteAll(from: work, on: req).get()
+    }
+    
     static func update(to newTags: [String], in work: Work, on req: Request) -> EventLoopFuture<Void> {
         work.$tags.get(on: req.db)
             .flatMap { existingTags in
@@ -119,5 +123,9 @@ extension Tag {
                         add(tagsToAdd, to: work, on: req)]
                     .flatten(on: req.eventLoop)
             }
+    }
+    
+    static func update(to newTags: [String], in work: Work, on req: Request) async throws {
+        try await update(to: newTags, in: work, on: req).get()
     }
 }

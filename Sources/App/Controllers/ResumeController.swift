@@ -22,16 +22,14 @@ struct ResumeController: RouteCollection {
         tokenAuthGroup.on(.POST, body: .collect(maxSize: "10mb"), use: uploadHandler)
     }
     
-    func downloadHandler(_ req: Request) -> EventLoopFuture<Response> {
-        req.fileHandler.download(resumeName, at: resumeFolder)
+    func downloadHandler(_ req: Request) async throws -> Response {
+        try await req.fileHandler.download(resumeName, at: resumeFolder)
     }
     
-    func uploadHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func uploadHandler(_ req: Request) async throws -> HTTPStatus {
         let data = try req.content.decode(FileUploadData.self)
         try data.validateExtension(["pdf"])
-        return req.fileHandler
-            .upload(data.file.data, named: resumeName, at: resumeFolder)
-            .map { .accepted }
+        try await req.fileHandler.upload(data.file.data, named: resumeName, at: resumeFolder)
+        return .accepted
     }
 }
-

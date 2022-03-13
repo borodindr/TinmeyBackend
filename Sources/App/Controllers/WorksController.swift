@@ -39,81 +39,69 @@ struct WorksController: RouteCollection {
     }
     
     // TEMP
-    func getAllImages(_ req: Request) -> EventLoopFuture<[WorkImage]> {
-        WorkImage.query(on: req.db).all()
+    func getAllImages(_ req: Request) async throws -> [WorkImage] {
+        try await WorkImage.query(on: req.db).all()
     }
     
-    func getAllHandler(_ req: Request) throws -> EventLoopFuture<[WorkAPIModel]> {
+    func getAllHandler(_ req: Request) async throws -> [WorkAPIModel] {
         let type = try Work.WorkType.detect(from: req)
-        return Work.query(on: req.db)
+        let query = Work.query(on: req.db)
             .filter(\.$type == type)
             .sort(\.$sortIndex, .descending)
-            .all()
-            .convertToAPIModel(on: req.db)
+        let works = try await query.all()
+        return try await works.convertToAPIModel(on: req.db)
     }
     
-    func getHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        Work.find(req.parameters.get("workID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .convertToAPIModel(on: req.db)
+    func getHandler(_ req: Request) async throws -> WorkAPIModel {
+        guard let work = try await Work.find(req.parameters.get("workID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        return try await work.convertToAPIModel(on: req.db)
     }
     
-    func createHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
+    func createHandler(_ req: Request) async throws -> WorkAPIModel {
         let type = try Work.WorkType.detect(from: req)
-        return try req.content
-            .decode(WorkAPIModel.Create.self)
-            .create(on: req, type: type)
-            .convertToAPIModel(on: req.db)
+        let createWork = try req.content.decode(WorkAPIModel.Create.self)
+        let work = try await createWork.create(on: req, type: type)
+        return try await work.convertToAPIModel(on: req.db)
     }
     
-    func deleteHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        Work.find(req.parameters.get("workID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { work -> EventLoopFuture<Int> in
-                let sortIndex = work.sortIndex
-                return [Tag.deleteAll(from: work, on: req),
-                        work.deleteImages(on: req)]
-                    .flatten(on: req.eventLoop)
-                    .flatMap {
-                        work.delete(on: req.db)
-                    }
-                    .map { sortIndex }
-            }
-            .flatMap { deletedSortIndex in
-                // Reorder other works
-                Work.query(on: req.db)
-                    .filter(\.$sortIndex > deletedSortIndex)
-                    .all()
-                    .flatMapEach(on: req.eventLoop) { workToUpdate in
-                        workToUpdate.sortIndex -= 1
-                        return workToUpdate.save(on: req.db)
-                    }
-            }
-            .transform(to: .noContent)
-    }
-    
-    func updateHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        let updatedWorkData = try req.content.decode(WorkAPIModel.Create.self)
+    func deleteHandler(_ req: Request) async throws -> HTTPStatus {
+        guard let work = try await Work.find(req.parameters.get("workID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let sortIndex = work.sortIndex
+        try await Tag.deleteAll(from: work, on: req)
+        try await work.deleteImages(on: req)
+        try await work.delete(on: req.db)
+        let worksToUpdateQuery = Work.query(on: req.db)
+            .filter(\.$sortIndex > sortIndex)
+        let worksToUpdate = try await worksToUpdateQuery.all()
         
-        return Work.find(req.parameters.get("workID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { work in
-                work.title = updatedWorkData.title
-                work.description = updatedWorkData.description
-                work.seeMoreLink = updatedWorkData.seeMoreLink?.absoluteString
-                work.bodyIndex = updatedWorkData.bodyIndex
-                return work.save(on: req.db)
-                    .flatMap {
-                        Tag.update(to: updatedWorkData.tags, in: work, on: req)
-                    }
-                    .flatMap {
-                        work.updateImages(to: updatedWorkData.images, on: req)
-                    }
-                    .flatMap { work.convertToAPIModel(on: req.db) }
-            }
+        for work in worksToUpdate {
+            work.sortIndex -= 1
+            try await work.save(on: req.db)
+        }
+        
+        return .noContent
     }
     
-    func reorderHandler(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
+    func updateHandler(_ req: Request) async throws -> WorkAPIModel {
+        let updatedWorkData = try req.content.decode(WorkAPIModel.Create.self)
+        guard let work = try await Work.find(req.parameters.get("workID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        work.title = updatedWorkData.title
+        work.description = updatedWorkData.description
+        work.seeMoreLink = updatedWorkData.seeMoreLink?.absoluteString
+        work.bodyIndex = updatedWorkData.bodyIndex
+        try await work.save(on: req.db)
+        try await Tag.update(to: updatedWorkData.tags, in: work, on: req)
+        try await work.updateImages(to: updatedWorkData.images, on: req)
+        return try await work.convertToAPIModel(on: req.db)
+    }
+    
+    func reorderHandler(_ req: Request) async throws -> WorkAPIModel {
         guard let directionRawValue = req.parameters.get("direction"),
               let direction = WorkAPIModel.ReorderDirection(rawValue: directionRawValue) else {
             throw Abort(.badRequest, reason: "Wrong direction type")
@@ -121,115 +109,84 @@ struct WorksController: RouteCollection {
         
         switch direction {
         case .forward:
-            return try reorderWorkForward(req)
+            return try await reorderWorkForward(req)
         case .backward:
-            return try reorderWorkBackward(req)
+            return try await reorderWorkBackward(req)
         }
     }
     
-    private func reorderWorkForward(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        Work.find(req.parameters.get("workID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { workToReorder in
-                // find work, which is at new index
-                Work.query(on: req.db)
-                    .filter(\.$sortIndex == workToReorder.sortIndex + 1)
-                    .first()
-                    .unwrap(or: Abort(.badRequest, reason: "Unable to move work forward because it is already first."))
-                    .map { workAtNewIndex -> [Work] in
-                        workToReorder.sortIndex += 1
-                        workAtNewIndex.sortIndex -= 1
-                        return [workToReorder, workAtNewIndex]
-                    }
-                    .flatMapEach(on: req.eventLoop) { work in
-                        work.save(on: req.db)
-                    }
-                    .flatMap { workToReorder.convertToAPIModel(on: req.db) }
-            }
+    private func reorderWorkForward(_ req: Request) async throws -> WorkAPIModel {
+        guard let workToReorder = try await Work.find(req.parameters.get("workID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let nextWorkQuery = Work.query(on: req.db)
+            .filter(\.$sortIndex == workToReorder.sortIndex + 1)
+        guard let nextWork = try await nextWorkQuery.first() else {
+            let reason = "Unable to move work forward because it is already first."
+            throw Abort(.badRequest, reason: reason)
+        }
+        workToReorder.sortIndex += 1
+        nextWork.sortIndex -= 1
+        try await workToReorder.save(on: req.db)
+        try await nextWork.save(on: req.db)
+        return try await workToReorder.convertToAPIModel(on: req.db)
     }
     
-    private func reorderWorkBackward(_ req: Request) throws -> EventLoopFuture<WorkAPIModel> {
-        Work.find(req.parameters.get("workID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { workToReorder in
-                // find work, which is at new index
-                Work.query(on: req.db)
-                    .filter(\.$sortIndex == workToReorder.sortIndex - 1)
-                    .first()
-                    .unwrap(or: Abort(.badRequest, reason: "Unable to move work backward because it is already last."))
-                    .map { workAtNewIndex -> [Work] in
-                        workToReorder.sortIndex -= 1
-                        workAtNewIndex.sortIndex += 1
-                        return [workToReorder, workAtNewIndex]
-                    }
-                    .flatMapEach(on: req.eventLoop) { work in
-                        work.save(on: req.db)
-                    }
-                    .flatMap { workToReorder.convertToAPIModel(on: req.db) }
-            }
+    private func reorderWorkBackward(_ req: Request) async throws -> WorkAPIModel {
+        guard let workToReorder = try await Work.find(req.parameters.get("workID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let previousWorkQuery = Work.query(on: req.db)
+            .filter(\.$sortIndex == workToReorder.sortIndex - 1)
+        guard let previousWork = try await previousWorkQuery.first() else {
+            let reason = "Unable to move work backward because it is already last."
+            throw Abort(.badRequest, reason: reason)
+        }
+        workToReorder.sortIndex -= 1
+        previousWork.sortIndex += 1
+        try await workToReorder.save(on: req.db)
+        try await previousWork.save(on: req.db)
+        return try await workToReorder.convertToAPIModel(on: req.db)
     }
     
-    func addImageHandler(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    func addImageHandler(_ req: Request) async throws -> HTTPStatus {
         let data = try req.content.decode(FileUploadData.self)
         let filename = data.file.filename
         try data.validateImageExtension()
-        
-        return WorkImage.find(req.parameters.get("imageID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { image in
-                let path: [String]
-                do {
-                    path = try FilePathBuilder().workImagePath(for: image)
-                } catch {
-                    return req.eventLoop.makeFailedFuture(error)
-                }
-                return req.fileHandler.upload(data.file.data, named: filename, at: path)
-                    .flatMap {
-                        image.name = filename
-                        return image.save(on: req.db).map { .created }
-                    }
-            }
+        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        let path = try FilePathBuilder().workImagePath(for: image)
+        try await req.fileHandler.upload(data.file.data, named: filename, at: path)
+        image.name = filename
+        try await image.save(on: req.db)
+        return .created
     }
     
-    func deleteImageHandler(_ req: Request) -> EventLoopFuture<HTTPStatus> {
-        WorkImage.find(req.parameters.get("imageID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { image in
-                guard let filename = image.name else {
-                    let error =  Abort(.notFound)
-                    return req.eventLoop.makeFailedFuture(error)
-                }
-                let path: [String]
-                do {
-                    path = try FilePathBuilder().workImagePath(for: image)
-                } catch {
-                    return req.eventLoop.makeFailedFuture(error)
-                }
-                return req.fileHandler.delete(filename, at: path)
-                    .flatMap {
-                        image.name = nil
-                        return image.save(on: req.db)
-                    }
-            }
-            .map { .noContent }
+    func deleteImageHandler(_ req: Request) async throws -> HTTPStatus {
+        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        guard let filename = image.name else {
+            throw Abort(.notFound)
+        }
+        let path = try FilePathBuilder().workImagePath(for: image)
+        try await req.fileHandler.delete(filename, at: path)
+        image.name = nil
+        try await image.save(on: req.db)
+        return .noContent
     }
     
-    func downloadImageHandler(_ req: Request) throws -> EventLoopFuture<Response> {
-        WorkImage.find(req.parameters.get("imageID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { image in
-                guard let filename = image.name else {
-                    let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-                    return req.eventLoop.makeFailedFuture(Abort(.notFound, reason: reason))
-                }
-                let path: [String]
-                do {
-                    path = try FilePathBuilder().workImagePath(for: image)
-                } catch {
-                    return req.eventLoop.makeFailedFuture(error)
-                }
-                return req.fileHandler.download(filename, at: path)
-            }
+    func downloadImageHandler(_ req: Request) async throws -> Response {
+        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        guard let filename = image.name else {
+            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
+            throw Abort(.notFound, reason: reason)
+        }
+        let path = try FilePathBuilder().workImagePath(for: image)
+        return try await req.fileHandler.download(filename, at: path)
     }
     
 }

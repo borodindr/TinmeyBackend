@@ -21,40 +21,33 @@ struct ProfileController: RouteCollection {
         tokenAuthGroup.put(use: updateHandler)
     }
     
-    func getHandler(_ req: Request) throws -> EventLoopFuture<ProfileAPIModel> {
-        try getMainProfile(req)
-            .flatMapThrowing {
-                try ProfileAPIModel($0)
-            }
+    func getHandler(_ req: Request) async throws -> ProfileAPIModel {
+        let profile = try await getMainProfile(req)
+        return try ProfileAPIModel(profile)
     }
     
-    func updateHandler(_ req: Request) throws -> EventLoopFuture<ProfileAPIModel> {
+    func updateHandler(_ req: Request) async throws -> ProfileAPIModel {
         let updatedProfile = try req.content.decode(ProfileAPIModel.self)
-        return try getMainProfile(req)
-            .flatMap { profile in
-                profile.name = updatedProfile.name
-                profile.email = updatedProfile.email
-                profile.location = updatedProfile.location
-                profile.shortAbout = updatedProfile.shortAbout
-                profile.about = updatedProfile.about
-                
-                return profile.save(on: req.db)
-                    .flatMapThrowing {
-                        try ProfileAPIModel(profile)
-                    }
-            }
+        let profile = try await getMainProfile(req)
+        profile.name = updatedProfile.name
+        profile.email = updatedProfile.email
+        profile.location = updatedProfile.location
+        profile.shortAbout = updatedProfile.shortAbout
+        profile.about = updatedProfile.about
+        
+        try await profile.save(on: req.db)
+        return try ProfileAPIModel(profile)
     }
     
-    func getMainProfile(_ req: Request) throws -> EventLoopFuture<Profile> {
-        User.query(on: req.db)
-            .filter(\.$isMain == true)
-            .first()
-            .unwrap(or: Abort(.notFound))
-            .flatMap { mainUser in
-                mainUser.$profile
-                    .get(on: req.db)
-                    .map { $0.first }
-                    .unwrap(or: Abort(.notFound))
-            }
+    func getMainProfile(_ req: Request) async throws -> Profile {
+        let query = User.query(on: req.db).filter(\.$isMain == true)
+        guard let mainUser = try await query.first() else {
+            throw Abort(.notFound)
+        }
+        let profiles = try await mainUser.$profile.get(on: req.db)
+        guard let mainProfile = profiles.first else {
+            throw Abort(.notFound)
+        }
+        return mainProfile
     }
 }

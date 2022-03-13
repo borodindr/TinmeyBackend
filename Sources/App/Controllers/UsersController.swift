@@ -24,41 +24,32 @@ struct UsersController: RouteCollection {
         tokenAuthGroup.put("changePassword", use: changePasswordHandler)
     }
     
-    func getAllHandler(_ req: Request) -> EventLoopFuture<[UserAPIModel]> {
-        User.query(on: req.db).all()
-            .flatMapEachThrowing { user in
-                try UserAPIModel(user)
-            }
+    func getAllHandler(_ req: Request) async throws -> [UserAPIModel] {
+        let users = try await User.query(on: req.db).all()
+        return try users.map(UserAPIModel.init)
     }
     
-    func loginHandler(_ req: Request) throws -> EventLoopFuture<UserAPIModel.LoginResult> {
+    func loginHandler(_ req: Request) async throws -> UserAPIModel.LoginResult {
         let user = try req.auth.require(User.self)
         let token = try Token.generate(for: user)
-        
-        return token.save(on: req.db)
-            .flatMap { token.$user.load(on: req.db) }
-            .flatMapThrowing {
-                try UserAPIModel.LoginResult(token)
-            }
+        try await token.save(on: req.db)
+        try await token.$user.load(on: req.db)
+        return try UserAPIModel.LoginResult(token)
     }
     
-    func changePasswordHandler(_ req: Request) throws -> EventLoopFuture<UserAPIModel> {
-        let user = try req.auth.require(User.self)
+    func changePasswordHandler(_ req: Request) async throws -> UserAPIModel {
+        let userID = try req.auth.require(User.self).requireID()
         let data = try req.content.decode(UserAPIModel.ChangePassword.self)
         
-        return User
-            .find(try user.requireID(), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMapThrowing { user in
-                try validate(data, for: user)
-                let newPassword = try Bcrypt.hash(data.newPassword)
-                user.password = newPassword
-                return user
-            }
-            .flatMap { user in
-                user.save(on: req.db)
-                    .flatMapThrowing { try UserAPIModel(user) }
-            }
+        guard let user = try await User.find(userID, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        try validate(data, for: user)
+        let newPassword = try Bcrypt.hash(data.newPassword)
+        user.password = newPassword
+        
+        try await user.save(on: req.db)
+        return try UserAPIModel(user)
     }
     
 }

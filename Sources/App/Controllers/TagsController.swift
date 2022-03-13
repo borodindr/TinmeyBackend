@@ -15,8 +15,7 @@ struct TagsController: RouteCollection {
         tagsGroup.get(use: getAllHandler)
     }
     
-    func getAllHandler(_ req: Request) -> EventLoopFuture<[String]> {
-        Tag.query(on: req.db).all()
-            .mapEach { $0.name }
+    func getAllHandler(_ req: Request) async throws -> [String] {
+        try await Tag.query(on: req.db).all().map { $0.name }
     }
 }

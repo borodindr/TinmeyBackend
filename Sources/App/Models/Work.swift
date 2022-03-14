@@ -66,73 +66,87 @@ extension Work {
 }
 
 extension Work {
-    func deleteImages(on req: Request) -> EventLoopFuture<Void> {
-        $images.query(on: req.db)
+    func deleteImages(
+        on database: Database,
+        fileHandler: FileHandler
+    ) -> EventLoopFuture<Void> {
+        $images.query(on: database)
             .all()
             .flatMapThrowing { images in
                 try images.compactMap { image in
                     let path = try FilePathBuilder().workImagePath(for: image)
                     if let imageName = image.name {
-                        return req.fileHandler.delete(imageName, at: path)
+                        return fileHandler.delete(imageName, at: path)
                     } else {
                         return nil
                     }
                 }
             }
-            .flatMap { $0.flatten(on: req.eventLoop) }
+            .flatMap { $0.flatten(on: database.eventLoop) }
     }
     
-    func deleteImages(on req: Request) async throws {
-        try await deleteImages(on: req).get()
+    func deleteImages(
+        on database: Database,
+        fileHandler: FileHandler
+    ) async throws {
+        try await deleteImages(on: database, fileHandler: fileHandler).get()
     }
     
-    func updateImages(to newImages: [WorkAPIModel.Image.Create], on req: Request) -> EventLoopFuture<Void> {
-        $images.get(on: req.db)
+    func updateImages(
+        to newImages: [WorkAPIModel.Image.Create],
+        on database: Database,
+        fileHandler: FileHandler
+    ) -> EventLoopFuture<Void> {
+        $images.get(on: database)
             .flatMap { images in
                 var images = images
                 return newImages.enumerated().map { newImageIndex, newImage -> EventLoopFuture<Void> in
                     guard let newImageID = newImage.id else {
                         // New image has no id -> Create new image
-                        return WorkImage.add(at: newImageIndex, to: self, on: req)
+                        return WorkImage.add(at: newImageIndex, to: self, on: database)
                     }
                     // New image has id -> updated
                     guard let index = images.firstIndex(where: { $0.id == newImageID }) else {
                         let reason = "Attempted to update image which is not related to the work"
                         let error = Abort(.notFound, reason: reason)
-                        return req.eventLoop.makeFailedFuture(error)
+                        return database.eventLoop.makeFailedFuture(error)
                     }
                     // Found saved image with the id
                     let image = images.remove(at: index)
                     if image.sortIndex != newImageIndex {
                         // image was reordered -> update sortIndex and save
                         image.sortIndex = newImageIndex
-                        return image.save(on: req.db)
+                        return image.save(on: database)
                     }
-                    return req.eventLoop.makeSucceededVoidFuture()
+                    return database.eventLoop.makeSucceededVoidFuture()
                 }
-                .flatten(on: req.eventLoop)
+                .flatten(on: database.eventLoop)
                 .flatMap {
                     guard !images.isEmpty else {
-                        return req.eventLoop.makeSucceededVoidFuture()
+                        return database.eventLoop.makeSucceededVoidFuture()
                     }
                     return images.flatMap { image -> [EventLoopFuture<Void>] in
                         let deleteFileTask: EventLoopFuture<Void>
-                        let deleteModelTask = image.delete(on: req.db)
+                        let deleteModelTask = image.delete(on: database)
                         let path = try! FilePathBuilder().workImagePath(for: image)
                         if let imageName = image.name {
-                            deleteFileTask = req.fileHandler.delete(imageName, at: path)
+                            deleteFileTask = fileHandler.delete(imageName, at: path)
                         } else {
-                            deleteFileTask = req.eventLoop.makeSucceededVoidFuture()
+                            deleteFileTask = database.eventLoop.makeSucceededVoidFuture()
                         }
                         return [deleteFileTask, deleteModelTask]
                     }
-                    .flatten(on: req.eventLoop)
+                    .flatten(on: database.eventLoop)
                 }
                 
             }
     }
     
-    func updateImages(to newImages: [WorkAPIModel.Image.Create], on req: Request) async throws {
-        try await updateImages(to: newImages, on: req).get()
+    func updateImages(
+        to newImages: [WorkAPIModel.Image.Create],
+        on database: Database,
+        fileHandler: FileHandler
+    ) async throws {
+        try await updateImages(to: newImages, on: database, fileHandler: fileHandler).get()
     }
 }

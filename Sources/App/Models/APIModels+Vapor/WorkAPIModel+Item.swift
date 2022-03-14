@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import Fluent
 import TinmeyCore
 
 extension WorkAPIModel.Image {
@@ -26,22 +27,39 @@ extension WorkAPIModel.Image {
 }
 
 extension WorkImage {
-    static func add(at index: Int, to work: Work, on req: Request) -> EventLoopFuture<Void> {
-        req.eventLoop.makeSucceededVoidFuture()
+    static func add(at index: Int, to work: Work, on database: Database) -> EventLoopFuture<Void> {
+        database.eventLoop.makeSucceededVoidFuture()
             .flatMapThrowing {
                 WorkImage(sortIndex: index, workID: try work.requireID())
             }
-            .flatMap { $0.save(on: req.db) }
+            .flatMap { $0.save(on: database) }
     }
     
-    static func add(_ createImages: [WorkAPIModel.Image.Create], to work: Work, on req: Request) -> EventLoopFuture<Void> {
-        req.eventLoop.future(createImages)
+    static func add(
+        _ createImages: [WorkAPIModel.Image.Create],
+        to work: Work,
+        on database: Database
+    ) -> EventLoopFuture<Void> {
+        database.eventLoop.future(createImages)
             .map(\.indices)
             .flatMapEachThrowing { index in
                 WorkImage(sortIndex: index, workID: try work.requireID())
             }
             .flatMap { items in
-                items.save(on: req.db)
+                items.save(on: database)
             }
+    }
+    
+    static func add(
+        _ createImages: [WorkAPIModel.Image.Create],
+        to work: Work,
+        on database: Database
+    ) async throws {
+        var workImages: [WorkImage] = []
+        for index in createImages.indices {
+            let workImage = WorkImage(sortIndex: index, workID: try work.requireID())
+            workImages.append(workImage)
+        }
+        try await workImages.save(on: database)
     }
 }

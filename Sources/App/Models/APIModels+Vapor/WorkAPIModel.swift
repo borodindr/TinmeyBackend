@@ -32,70 +32,46 @@ extension WorkAPIModel.Create {
 }
 
 extension WorkAPIModel.Create {
-    func create(on req: Request) -> EventLoopFuture<Work> {
-        Work.query(on: req.db)
-            .sort(\.$sortIndex, .descending)
-            .first()
-            .map { lastWork -> Int in
-                if let lastWork = lastWork {
-                    return lastWork.sortIndex + 1
-                } else {
-                    return 0
-                }
-            }
-            .map { makeWork(sortIndex: $0) }
-            .flatMap { work -> EventLoopFuture<Work> in
-                work.save(on: req.db).map { work }
-            }
-            .flatMap { work -> EventLoopFuture<Work> in
-                WorkImage.add(images, to: work, on: req)
-                    .map { work }
-            }
-            .flatMap { work in
-                Tag.add(tags, to: work, on: req)
-                    .map { work }
-            }
-    }
-    
-    func create(on req: Request) async throws -> Work {
-        try await create(on: req).get()
+    func create(on database: Database) async throws -> Work {
+        let query = Work.query(on: database).sort(\.$sortIndex, .descending)
+        let lastWork = try await query.first()
+        let sortIndex: Int
+        if let lastIndex = lastWork?.sortIndex {
+            sortIndex = lastIndex + 1
+        } else {
+            sortIndex = 0
+        }
+        let work = makeWork(sortIndex: sortIndex)
+        try await work.save(on: database)
+        try await WorkImage.add(images, to: work, on: database)
+        try await Tag.add(tags, to: work, on: database)
+        return work
     }
 }
 
 extension Work {
-    func convertToAPIModel(on database: Database) -> EventLoopFuture<WorkAPIModel> {
-        // TODO: change load to query
-        let loadTags = $tags.load(on: database)
-        let loadImages = $images.query(on: database).sort(\.$sortIndex, .ascending).all()
-        return database.eventLoop.future(self)
-            .flatMap { work in
-                loadTags.and(loadImages)
-                    .map { (_, images) in (work, images) }
-            }
-            .flatMapThrowing { work, images in
-                try WorkAPIModel(
-                    id: work.requireID(),
-                    createdAt: work.$createdAt.orThrow(),
-                    updatedAt: work.$updatedAt.orThrow(),
-                    title: work.title,
-                    description: work.description,
-                    tags: work.tags.map { $0.name },
-                    images: images.map(WorkAPIModel.Image.init)
-                )
-            }
-    }
-    
     func convertToAPIModel(on database: Database) async throws-> WorkAPIModel {
-        try await convertToAPIModel(on: database).get()
+        try await $tags.load(on: database)
+        async let images = $images.query(on: database).sort(\.$sortIndex, .ascending).all()
+        return try await WorkAPIModel(
+            id: requireID(),
+            createdAt: $createdAt.orThrow(),
+            updatedAt: $updatedAt.orThrow(),
+            title: title,
+            description: description,
+            tags: tags.map { $0.name },
+            images: images.map(WorkAPIModel.Image.init)
+        )
     }
 }
 
 extension Array where Element == Work {
     func convertToAPIModel(on database: Database) async throws -> [WorkAPIModel] {
-        try await database.eventLoop.future(self)
-            .flatMapEach(on: database.eventLoop) {
-                $0.convertToAPIModel(on: database)
-            }
-            .get()
+        var apiModels: [WorkAPIModel] = []
+        for work in self {
+            let apiModel = try await work.convertToAPIModel(on: database)
+            apiModels.append(apiModel)
+        }
+        return apiModels
     }
 }

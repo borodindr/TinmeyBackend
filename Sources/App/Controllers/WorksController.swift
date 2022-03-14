@@ -13,7 +13,7 @@ struct WorksController: RouteCollection {
     let imageFolder = "WorkImages"
     
     func boot(routes: RoutesBuilder) throws {
-        let worksRoutes = routes.grouped("api", ":workType")
+        let worksRoutes = routes.grouped("api", "works")
         worksRoutes.get(use: getAllHandler)
         worksRoutes.get(":workID", use: getHandler)
         
@@ -26,8 +26,7 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.put(":workID", use: updateHandler)
         tokenAuthGroup.put(":workID", "reorder", ":direction", use: reorderHandler)
         
-        let imagesGroup = routes.grouped("api", "work_images")
-        imagesGroup.get(use: getAllImages)
+        let imagesGroup = worksRoutes.grouped("images")
         imagesGroup.get(":imageID", use: downloadImageHandler)
         let tokenAuthImagesGroup = imagesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
         tokenAuthImagesGroup.on(.POST, ":imageID", body: .collect(maxSize: "10mb"), use: addImageHandler)
@@ -38,14 +37,8 @@ struct WorksController: RouteCollection {
         worksRoutes.get("preview", "secondImage", use: downloadSecondPreviewImageHandler)
     }
     
-    // TEMP
-    func getAllImages(_ req: Request) async throws -> [WorkImage] {
-        try await WorkImage.query(on: req.db).all()
-    }
-    
     func getAllHandler(_ req: Request) async throws -> [WorkAPIModel] {
-        let query = Work.query(on: req.db)
-            .sort(\.$sortIndex, .descending)
+        let query = Work.query(on: req.db).sort(\.$sortIndex, .descending)
         let works = try await query.all()
         return try await works.convertToAPIModel(on: req.db)
     }
@@ -59,7 +52,7 @@ struct WorksController: RouteCollection {
     
     func createHandler(_ req: Request) async throws -> WorkAPIModel {
         let createWork = try req.content.decode(WorkAPIModel.Create.self)
-        let work = try await createWork.create(on: req)
+        let work = try await createWork.create(on: req.db)
         return try await work.convertToAPIModel(on: req.db)
     }
     
@@ -68,11 +61,10 @@ struct WorksController: RouteCollection {
             throw Abort(.notFound)
         }
         let sortIndex = work.sortIndex
-        try await Tag.deleteAll(from: work, on: req)
-        try await work.deleteImages(on: req)
+        try await Tag.deleteAll(from: work, on: req.db)
+        try await work.deleteImages(on: req.db, fileHandler: req.fileHandler)
         try await work.delete(on: req.db)
-        let worksToUpdateQuery = Work.query(on: req.db)
-            .filter(\.$sortIndex > sortIndex)
+        let worksToUpdateQuery = Work.query(on: req.db).filter(\.$sortIndex > sortIndex)
         let worksToUpdate = try await worksToUpdateQuery.all()
         
         for work in worksToUpdate {
@@ -91,8 +83,8 @@ struct WorksController: RouteCollection {
         work.title = updatedWorkData.title
         work.description = updatedWorkData.description
         try await work.save(on: req.db)
-        try await Tag.update(to: updatedWorkData.tags, in: work, on: req)
-        try await work.updateImages(to: updatedWorkData.images, on: req)
+        try await Tag.update(to: updatedWorkData.tags, in: work, on: req.db)
+        try await work.updateImages(to: updatedWorkData.images, on: req.db, fileHandler: req.fileHandler)
         return try await work.convertToAPIModel(on: req.db)
     }
     
@@ -114,8 +106,7 @@ struct WorksController: RouteCollection {
         guard let workToReorder = try await Work.find(req.parameters.get("workID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let nextWorkQuery = Work.query(on: req.db)
-            .filter(\.$sortIndex == workToReorder.sortIndex + 1)
+        let nextWorkQuery = Work.query(on: req.db).filter(\.$sortIndex == workToReorder.sortIndex + 1)
         guard let nextWork = try await nextWorkQuery.first() else {
             let reason = "Unable to move work forward because it is already first."
             throw Abort(.badRequest, reason: reason)
@@ -131,8 +122,7 @@ struct WorksController: RouteCollection {
         guard let workToReorder = try await Work.find(req.parameters.get("workID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let previousWorkQuery = Work.query(on: req.db)
-            .filter(\.$sortIndex == workToReorder.sortIndex - 1)
+        let previousWorkQuery = Work.query(on: req.db).filter(\.$sortIndex == workToReorder.sortIndex - 1)
         guard let previousWork = try await previousWorkQuery.first() else {
             let reason = "Unable to move work backward because it is already last."
             throw Abort(.badRequest, reason: reason)

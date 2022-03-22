@@ -82,7 +82,7 @@ struct WebsiteController: RouteCollection {
             objects: try works.map {
                 .generate(from: try .generate(from: $0))
             },
-            works: workItems + workItems + workItems + workItems + workItems + workItems + workItems + workItems
+            works: workItems
         )
         return try await req.view.render("works", context)
     }

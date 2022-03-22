@@ -300,6 +300,8 @@ nav img {
     display: flex;
     flex-wrap: wrap;
     align-content: center;
+    align-items: center;
+    justify-content: center;
     gap: var(--tag-list-gap);
 }
 
@@ -388,6 +390,20 @@ footer a {
 
 .phone-show {
     display: none;
+}
+
+/*Fancybox*/
+
+.fancybox__container .carousel__dots {
+  top: calc(100% - 3rem);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  padding: 0 6px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  z-index: 1052;
 }
 
 /*dynemic item size for smaller screens then 3 items 300px each*/

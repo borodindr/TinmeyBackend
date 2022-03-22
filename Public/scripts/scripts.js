@@ -4,6 +4,13 @@ Fancybox.bind('[data-fancybox="gallery"]', {
 	Toolbar: false,
 	closeButton: "top",
 
+	Thumbs: false,
+
+	Carousel: {
+	    // Enable dots
+	    Dots: true,
+	},
+
 	Image: {
 		zoom: false,
 	},

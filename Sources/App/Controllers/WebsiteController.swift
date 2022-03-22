@@ -65,7 +65,7 @@ struct WebsiteController: RouteCollection {
                 var otherImagePaths = try work.images
                     .map { try $0.requireID().uuidString }
                     .map { "/download/work_images/\($0)" }
-//                otherImagePaths.removeFirst()
+                otherImagePaths.removeFirst()
                 
                 return WorksContext.Work(
                     title: work.title,

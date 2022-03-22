@@ -5,11 +5,11 @@
 	#endexport
 
 	#export("--content"):
-		#extend("objects"):
-		#export("--itemBody"):
-			#extend("itemBodyWork")
-		#endexport
-		#endextend
+		<div class="works">
+			#for(work in works):
+	    		#extend("work")
+			#endfor
+		</div>
 	#endexport
 
 #endextend

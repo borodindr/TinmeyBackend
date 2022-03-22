@@ -1,0 +1,33 @@
+<div class="work">
+    <div class="image-container" data-fancybox="gallery" data-src="#(work.coverPath)">
+        <img src="#(work.coverPath)" alt="image"/>
+        <div class="img-gradient">
+            <p class="title">
+                #unsafeHTML(work.title)
+            </p>
+            <p class="description">
+                #unsafeHTML(work.description)
+            </p>
+        </div>
+    </div>
+        
+    <div class="tag-list">
+        #for(tag in work.tags):
+            #if(tag == header.selectedTag):
+                <a href="?" class="tag selected">
+            #else:
+                <a href="?tag=#(tag)" class="tag">
+            #endif
+                    #(tag)
+                </a>
+        #endfor
+    </div>
+</div>
+
+#for(imagePath in work.otherImagesPaths):
+    <div class="work" style="display: none;">
+        <div class="image-container" data-fancybox="gallery" data-src="#(imagePath)">
+            <img src="#(imagePath)" alt="image"/>
+        </div>
+    </div>
+#endfor

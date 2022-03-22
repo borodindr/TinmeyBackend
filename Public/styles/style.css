@@ -14,7 +14,7 @@
     --button-bg-color: #FA7D7D;
     --button-hover-bg-color: #F2EDEE;
     --separator-color: #F2EDEE;
-    --tag-bg-color: #F2EDEE;
+    --tag-bg-color: #F4C2C1;
     --tag-selected-bg-color: #FA7D7D;
     /*text colors*/
     --text-color: #181818;
@@ -33,7 +33,7 @@
     --nav-bar-links-space: 1rem;
     --nav-bar-icon-height: 1.25rem;
 
-    --separator-width: 1px;
+    --separator-width: 0.625rem;
     --separator-large-width: 0.625rem;
 
     --columns-in-row: 3;
@@ -133,6 +133,75 @@ nav img {
     max-height: var(--nav-bar-icon-height);
 }
 
+.works {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem 0.625rem;
+}
+
+.work {
+    width: var(--item-size);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.work .image-container {
+    position: relative;
+    height: var(--row-height);
+}
+
+.work .image-container img {
+    position: relative;
+    max-height: 100%;
+    max-width: 100%;
+}
+
+.work p {
+    color: white;
+    padding: 0 0.5rem 0.5rem 0.5rem;
+    text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.work .title {
+    font-size: 1rem;
+}
+
+.work .description {
+    font-size: .75rem;
+}
+
+.img-gradient {
+    display: none;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    padding-top: 60px;
+    background-image: linear-gradient(
+        180deg,
+        hsla(0, 0%, 35.29%, 0) 0%,
+        hsla(0, 0%, 34.53%, 0.034375) 16.36%,
+        hsla(0, 0%, 32.42%, 0.125) 33.34%,
+        hsla(0, 0%, 29.18%, 0.253125) 50.1%,
+        hsla(0, 0%, 24.96%, 0.4) 65.75%,
+        hsla(0, 0%, 19.85%, 0.546875) 79.43%,
+        hsla(0, 0%, 13.95%, 0.675) 90.28%,
+        hsla(0, 0%, 7.32%, 0.765625) 97.43%,
+        hsla(0, 0%, 0%, 0.8) 100%
+    );
+}
+
+.img-gradient:hover {
+    display: block;
+}
+
+.work img:hover + .img-gradient {
+    display: block;
+}
+
 .row {
     display: flex;
     justify-content: center;
@@ -173,6 +242,10 @@ nav img {
     justify-content: space-between;
     height: 100%;
     width: 100%;
+}
+
+.vstack.center {
+    align-items: center;
 }
 
 .hstack {
@@ -226,6 +299,7 @@ nav img {
 .tag-list {
     display: flex;
     flex-wrap: wrap;
+    align-content: center;
     gap: var(--tag-list-gap);
 }
 

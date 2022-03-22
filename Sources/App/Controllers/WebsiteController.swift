@@ -16,88 +16,137 @@ struct WebsiteController: RouteCollection {
     let resumeName = "Katya_Tinmey-Resume.pdf"
     
     func boot(routes: RoutesBuilder) throws {
-        routes.get(use: indexHandler)
-        routes.get("sections", ":sectionType", ":imageType", use: getSectionImageHandler)
-        routes.get("covers", use: coversHandler)
-        routes.get("layouts", use: layoutsHandler)
+        routes.get(use: worksHandler)
+        routes.get("works", use: worksHandler)
+//        routes.get("sections", ":sectionType", ":imageType", use: getSectionImageHandler)
+//        routes.get("covers", use: coversHandler)
+//        routes.get("layouts", use: layoutsHandler)
         routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
-        routes.get("download", "resume", use: downloadResumeHandler)
+//        routes.get("download", "resume", use: downloadResumeHandler)
     }
     
-    func indexHandler(_ req: Request) async throws -> View {
-        let sections = try await Section.query(on: req.db).sort(\.$sortIndex, .ascending).all()
-        let profile = try await getMainProfile(req)
-        let meta = WebsiteMeta(title: "Home", profile: profile)
-        let header = IndexHeader(profile: profile)
-        let context = IndexContext(
-            meta: meta,
-            header: header,
-            about: profile.about,
-            objects: sections.map { section in
-                    .generate(from: .generate(from: section))
-            }
-        )
-        return try await req.view.render("index", context)
-    }
+//    func indexHandler(_ req: Request) async throws -> View {
+//        let sections = try await Section.query(on: req.db).sort(\.$sortIndex, .ascending).all()
+//        let profile = try await getMainProfile(req)
+//        let meta = WebsiteMeta(title: "Home", profile: profile)
+//        let header = IndexHeader(profile: profile)
+//        let context = IndexContext(
+//            meta: meta,
+//            header: header,
+//            about: profile.about,
+//            objects: sections.map { section in
+//                    .generate(from: .generate(from: section))
+//            }
+//        )
+//        return try await req.view.render("index", context)
+//    }
     
-    func coversHandler(_ req: Request) async throws -> View {
-        let sectionQuery = Section.query(on: req.db).filter(\.$type == .covers)
-        guard let section = try await sectionQuery.first() else {
-            throw Abort(.notFound)
-        }
-        
+    func worksHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
-        async let works = worksFuture(req, tagName: tagName)
+        async let works = works(req, tagName: tagName)
         async let tags = Tag.query(on: req.db).all()
         async let profile = getMainProfile(req)
         
         let meta = try await WebsiteMeta(title: "Covers", profile: profile)
         let availableTags = try await tags.map { $0.name }
         let header = WorkHeader(
-            section: section,
+            title: "",
+            description: "",
             availableTags: availableTags,
             selectedTag: tagName
         )
-        let context = await WorkContext(
-            meta: meta,
-            header: header,
-            objects: try works.map {
-                .generate(from: try .generate(from: $0))
+        let workItems: [WorksContext.Work] = try await works
+            .compactMap { work in
+                let imageID = try work.images.sorted {
+                    $0.sortIndex < $1.sortIndex
+                }
+                .first?.requireID().uuidString
+                guard let foundImageID = imageID else { return nil }
+                var otherImagePaths = try work.images
+                    .map { try $0.requireID().uuidString }
+                    .map { "/download/work_images/\($0)" }
+//                otherImagePaths.removeFirst()
+                
+                return WorksContext.Work(
+                    title: work.title,
+                    description: work.description,
+                    coverPath: "/download/work_images/\(foundImageID)",
+                    otherImagesPaths: otherImagePaths,
+                    tags: work.tags.map(\.name)
+                )
             }
-        )
-        return try await req.view.render("works", context)
-    }
-    
-    func layoutsHandler(_ req: Request) async throws -> View {
-        let sectionQuery = Section.query(on: req.db).filter(\.$type == .layouts)
-        guard let section = try await sectionQuery.first() else {
-            throw Abort(.notFound)
-        }
         
-        async let works = allWorksFuture(req)
-        async let profile = getMainProfile(req)
-        let meta = try await WebsiteMeta(title: "Layouts", profile: profile)
-        let header = WorkHeader(section: section)
-        let context = await WorkContext(
+        let context = await WorksContext(
             meta: meta,
             header: header,
             objects: try works.map {
                 .generate(from: try .generate(from: $0))
-            }
+            },
+            works: workItems + workItems + workItems + workItems + workItems + workItems + workItems + workItems
         )
         return try await req.view.render("works", context)
     }
     
-    func getSectionImageHandler(_ req: Request) async throws -> Response {
-        let sectionType = try Section.SectionType.detect(from: req)
-        let imageType = try ImageType.detect(from: req)
-        let sectionQuery = Section.query(on: req.db).filter(\.$type == sectionType)
-        guard let section = try await sectionQuery.first() else {
-            throw Abort(.notFound)
-        }
-        let imageName = try imageType.imageName(in: section)
-        return try await req.fileHandler.download(imageName, at: sectionsImageFolder)
-    }
+//    func coversHandler(_ req: Request) async throws -> View {
+//        let sectionQuery = Section.query(on: req.db).filter(\.$type == .covers)
+//        guard let section = try await sectionQuery.first() else {
+//            throw Abort(.notFound)
+//        }
+//
+//        let tagName = req.query[String.self, at: "tag"]
+//        async let works = works(req, tagName: tagName)
+//        async let tags = Tag.query(on: req.db).all()
+//        async let profile = getMainProfile(req)
+//
+//        let meta = try await WebsiteMeta(title: "Covers", profile: profile)
+//        let availableTags = try await tags.map { $0.name }
+//        let header = WorkHeader(
+//            section: section,
+//            availableTags: availableTags,
+//            selectedTag: tagName
+//        )
+//        let context = await WorksContext(
+//            meta: meta,
+//            header: header,
+//            objects: try works.map {
+//                .generate(from: try .generate(from: $0))
+//            },
+//            works: try works.compactMap { try $0.images.first?.requireID().uuidString }.map { .init(coverPath: "/download/work_images/\($0)")}
+//        )
+//        return try await req.view.render("works", context)
+//    }
+    
+//    func layoutsHandler(_ req: Request) async throws -> View {
+//        let sectionQuery = Section.query(on: req.db).filter(\.$type == .layouts)
+//        guard let section = try await sectionQuery.first() else {
+//            throw Abort(.notFound)
+//        }
+//
+//        async let works = allWorks(req)
+//        async let profile = getMainProfile(req)
+//        let meta = try await WebsiteMeta(title: "Layouts", profile: profile)
+//        let header = WorkHeader(section: section)
+//        let context = await WorksContext(
+//            meta: meta,
+//            header: header,
+//            objects: try works.map {
+//                .generate(from: try .generate(from: $0))
+//            },
+//            works: try works.compactMap { try $0.images.first?.requireID().uuidString }.map { .init(coverPath: "/download/work_images/\($0)")}
+//        )
+//        return try await req.view.render("works", context)
+//    }
+    
+//    func getSectionImageHandler(_ req: Request) async throws -> Response {
+//        let sectionType = try Section.SectionType.detect(from: req)
+//        let imageType = try ImageType.detect(from: req)
+//        let sectionQuery = Section.query(on: req.db).filter(\.$type == sectionType)
+//        guard let section = try await sectionQuery.first() else {
+//            throw Abort(.notFound)
+//        }
+//        let imageName = try imageType.imageName(in: section)
+//        return try await req.fileHandler.download(imageName, at: sectionsImageFolder)
+//    }
     
     func getWorkImageHandler(_ req: Request) async throws -> Response {
         guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
@@ -122,9 +171,9 @@ struct WebsiteController: RouteCollection {
         return profile
     }
     
-    func worksFuture(_ req: Request, tagName: String?) async throws -> [Work] {
+    func works(_ req: Request, tagName: String?) async throws -> [Work] {
         guard let tagName = tagName else {
-            return try await allWorksFuture(req)
+            return try await allWorks(req)
         }
         let query = Tag.query(on: req.db).filter(\.$name == tagName)
         guard let tag = try await query.first() else {
@@ -138,7 +187,7 @@ struct WebsiteController: RouteCollection {
             .all()
     }
     
-    func allWorksFuture(_ req: Request) async throws -> [Work] {
+    func allWorks(_ req: Request) async throws -> [Work] {
         try await Work.query(on: req.db).with(\.$tags).with(\.$images)
             .sort(\.$sortIndex, .descending)
             .all()
@@ -157,24 +206,29 @@ protocol WebsiteContext: Encodable {
     var header: HeaderType { get }
 }
 
-struct IndexContext: WebsiteContext {
-    let meta: WebsiteMeta
-    let header: IndexHeader
-    let about: String
-    let objects: [WebsiteObject<SectionBody>]
-    
-    init(meta: WebsiteMeta, header: IndexHeader, about: String, objects: [WebsiteObject<SectionBody>]) {
-        self.meta = meta
-        self.header = header
-        self.about = about.multilineHTML()
-        self.objects = objects
-    }
-}
-
-struct WorkContext: WebsiteContext {
+struct WorksContext: WebsiteContext {
     let meta: WebsiteMeta
     let header: WorkHeader
     let objects: [WebsiteObject<WorkBody>]
+    let works: [Work]
+}
+
+extension WorksContext {
+    struct Work: Encodable {
+        internal init(title: String, description: String, coverPath: String, otherImagesPaths: [String], tags: [String]) {
+            self.title = title.multilineHTML()
+            self.description = description.multilineHTML()
+            self.coverPath = coverPath
+            self.otherImagesPaths = otherImagesPaths
+            self.tags = tags
+        }
+        
+        let title: String
+        let description: String
+        let coverPath: String
+        let otherImagesPaths: [String]
+        let tags: [String]
+    }
 }
 
 // MARK: - Meta
@@ -201,23 +255,23 @@ protocol Header: Encodable {
     var description: String { get }
 }
 
-struct IndexHeader: Header {
-    let title: String
-    let description: String
-    let location: String
-    
-    init(profile: Profile) {
-        self.title = profile.name
-        self.description = profile.shortAbout.multilineHTML()
-        self.location = profile.location
-    }
-}
-
 struct WorkHeader: Header {
     let title: String
     let description: String
     let availableTags: [String]
     let selectedTag: String?
+    
+    init(
+        title: String,
+        description: String,
+        availableTags: [String],
+        selectedTag: String?
+    ) {
+        self.title = title
+        self.description = description
+        self.availableTags = availableTags
+        self.selectedTag = selectedTag
+    }
     
     init(section: Section, availableTags: [String], selectedTag: String?) {
         self.title = section.previewTitle

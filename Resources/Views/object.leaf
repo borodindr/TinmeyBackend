@@ -1,7 +1,0 @@
-<div class="hline-large"></div>
-#for(row in object.rows):
-    #extend("objectRow")
-    #if(row.isLast == false):
-        <div class="hline"></div>
-    #endif
-#endfor

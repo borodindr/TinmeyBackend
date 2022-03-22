@@ -13,7 +13,7 @@ extension WorkAPIModel.Image {
     init(_ workImage: WorkImage) throws {
         let path: String?
         if workImage.name != nil {
-            let directoryPath = ["api", "work_images", try workImage.requireID().uuidString].joined(separator: "/")
+            let directoryPath = ["api", "works", "images", try workImage.requireID().uuidString].joined(separator: "/")
             path = "\(directoryPath)"
         } else {
             path = nil

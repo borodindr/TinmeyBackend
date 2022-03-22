@@ -4,6 +4,10 @@
     <head>
         <meta charset="UTF-8" />
         <link rel="stylesheet" href="/styles/style.css" type="text/css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+        <script src="/scripts/scripts.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="canonical" href="#(meta.canonical)" />
 
@@ -38,16 +42,22 @@
         <nav>
             <div class="wrapper">        
                 <ul class="navigations">
-                    <li><a href="/">                                              Home   </a></li>
-                    <li><a href="/covers">                                        Covers </a></li>
+                    <!-- <li><a href="/">                                              Home   </a></li> --> <!-- This will be an icon -->
+                    <!-- <li><a href="/covers">                                        Works </a></li> -->
                     <!-- <li><a href="/layouts">                                       Layouts</a></li> -->
-                    <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog   </a></li>
+                    
                 </ul>
                 <ul class="links">
                     <li>
                         <a class="icon" href="mailTo:#(meta.email)">
                             <img class="phone-show" src="icon-mail.png" alt="mail icon">
                             <div class="email phone-hide">#(meta.email)</div>
+                        </a>
+                    </li>
+                    <!-- <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog   </a></li> -->
+                    <li>
+                        <a class="icon" href="https://medium.com/@katyatinmey" target="_blank">
+                            <img src="icon-medium.png" alt="instagram icon">
                         </a>
                     </li>
                     <li>
@@ -67,9 +77,10 @@
         <header>
             <div class="wrapper">
                 <div class="hline-large"></div>
-                <div class="row">
+                <div>
                     #import("--header")
                 </div>
+                <div class="hline-large"></div>
             </div>
         </header>
         <div class="wrapper">

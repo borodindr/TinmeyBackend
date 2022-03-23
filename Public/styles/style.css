@@ -395,15 +395,25 @@ footer a {
 /*Fancybox*/
 
 .fancybox__container .carousel__dots {
-  top: calc(100% - 3rem);
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-  padding: 0 6px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 1rem;
-  z-index: 1052;
+    top: calc(100% - 3rem);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    padding: 0 6px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 1rem;
+    z-index: 1052;
+}
+
+.fancybox__caption p {
+    font-size: 1rem;
+    color: var(--secondary-text-color);
+}
+
+.fancybox__caption h3 {
+    font-size: 1.25rem;
+    color: white;
 }
 
 /*dynemic item size for smaller screens then 3 items 300px each*/

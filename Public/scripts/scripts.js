@@ -8,7 +8,7 @@ Fancybox.bind('[data-fancybox="gallery"]', {
 
 	Carousel: {
 	    // Enable dots
-	    Dots: true,
+	    Dots: false,
 	},
 
 	Image: {

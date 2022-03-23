@@ -1,5 +1,10 @@
 <div class="work">
-    <div class="image-container" data-fancybox="gallery" data-src="#(work.coverPath)">
+    <div 
+        class="image-container" 
+        data-fancybox="gallery" 
+        data-src="#(work.coverPath)" 
+        data-caption="<h3>#unsafeHTML(work.title)</h3><p>#unsafeHTML(work.description) </p>"
+    >
         <img src="#(work.coverPath)" alt="image"/>
         <div class="img-gradient">
             <p class="title">
@@ -26,7 +31,12 @@
 
 #for(imagePath in work.otherImagesPaths):
     <div class="work" style="display: none;">
-        <div class="image-container" data-fancybox="gallery" data-src="#(imagePath)">
+        <div 
+            class="image-container" 
+            data-fancybox="gallery" 
+            data-src="#(imagePath)" 
+            data-caption="<h3>#unsafeHTML(work.title)</h3><p>#unsafeHTML(work.description)</p>"
+        >
             <img src="#(imagePath)" alt="image"/>
         </div>
     </div>

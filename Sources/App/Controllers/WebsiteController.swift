@@ -25,22 +25,6 @@ struct WebsiteController: RouteCollection {
 //        routes.get("download", "resume", use: downloadResumeHandler)
     }
     
-//    func indexHandler(_ req: Request) async throws -> View {
-//        let sections = try await Section.query(on: req.db).sort(\.$sortIndex, .ascending).all()
-//        let profile = try await getMainProfile(req)
-//        let meta = WebsiteMeta(title: "Home", profile: profile)
-//        let header = IndexHeader(profile: profile)
-//        let context = IndexContext(
-//            meta: meta,
-//            header: header,
-//            about: profile.about,
-//            objects: sections.map { section in
-//                    .generate(from: .generate(from: section))
-//            }
-//        )
-//        return try await req.view.render("index", context)
-//    }
-    
     func worksHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
         async let works = works(req, tagName: tagName)

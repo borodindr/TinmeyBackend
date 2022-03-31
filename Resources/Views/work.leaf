@@ -1,19 +1,11 @@
 <div class="work">
     <div 
-        class="image-container" 
+        class="image-container centering" 
         data-fancybox="gallery" 
         data-src="#(work.coverPath)" 
         data-caption="<h3>#unsafeHTML(work.title)</h3><p>#unsafeHTML(work.description) </p>"
     >
         <img src="#(work.coverPath)" alt="image"/>
-        <div class="img-gradient">
-            <p class="title">
-                #unsafeHTML(work.title)
-            </p>
-            <p class="description">
-                #unsafeHTML(work.description)
-            </p>
-        </div>
     </div>
         
     <div class="tag-list">

@@ -40,47 +40,40 @@
     
     <body>
         <nav>
-            <div class="wrapper">        
-                <ul class="navigations">
-                    <!-- <li><a href="/">                                              Home   </a></li> --> <!-- This will be an icon -->
-                    <!-- <li><a href="/covers">                                        Works </a></li> -->
-                    <!-- <li><a href="/layouts">                                       Layouts</a></li> -->
-                    
-                </ul>
-                <ul class="links">
-                    <li>
-                        <a class="icon" href="mailTo:#(meta.email)">
-                            <img class="phone-show" src="icon-mail.png" alt="mail icon">
-                            <div class="email phone-hide">#(meta.email)</div>
-                        </a>
-                    </li>
-                    <!-- <li><a href="https://medium.com/@katyatinmey" target="_blank">Blog   </a></li> -->
-                    <li>
-                        <a class="icon" href="https://medium.com/@katyatinmey" target="_blank">
-                            <img src="icon-medium.png" alt="instagram icon">
-                        </a>
-                    </li>
-                    <li>
-                        <a class="icon" href="https://www.instagram.com/tinmeydesign" target="_blank">
-                            <img src="icon-instagram.png" alt="instagram icon">
-                        </a>
-                    </li>
-                    <li>
-                        <a class="icon" href="https://www.behance.net/katyatinmey" target="_blank">
-                            <img src="icon-behance.png" alt="behance icon">
-                        </a>
-                    </li>
-                </ul>
+            <div class="nav-side left">
+                <div class="logo">
+                    <a href="/">
+                        <img src="logo-fat.svg" alt="tinmey logo">
+                    </a>
+                </div>
+            </div>
+            <div class="nav-side right">
+                <div class="contact">
+                    <a href="mailTo:#(meta.email)">
+                        <img src="icon-mail.svg" alt="mail icon">
+                    </a>
+                </div>
+                <div class="contact">
+                    <a href="https://medium.com/@katyatinmey" target="_blank">
+                        <img src="icon-medium.svg" alt="instagram icon">
+                    </a>
+                </div>
+                <div class="contact">
+                    <a href="https://www.instagram.com/tinmeydesign" target="_blank">
+                        <img src="icon-instagram.svg" alt="instagram icon">
+                    </a>
+                </div>
+                <div class="contact">
+                    <a href="https://www.behance.net/katyatinmey" target="_blank">
+                        <img src="icon-behance.svg" alt="behance icon">
+                    </a>
+                </div>
             </div>
         </nav>
 
         <header>
             <div class="wrapper">
-                <div class="hline-large"></div>
-                <div>
                     #import("--header")
-                </div>
-                <div class="hline-large"></div>
             </div>
         </header>
         <div class="wrapper">

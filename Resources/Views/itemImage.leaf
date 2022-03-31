@@ -1,3 +1,0 @@
-<div class="item image">
-	<img src="#(item.content.image.imageLink)" alt="image"/>
-</div>

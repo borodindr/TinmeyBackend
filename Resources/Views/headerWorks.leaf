@@ -1,15 +1,16 @@
-<div class="vstack center">
-    <h2>Title</h2>
-    <h2>Subtitle</h2>
-    <div class="tag-list">
-        #for(tag in header.availableTags):
-            #if(tag == header.selectedTag):
-                <a href="?" class="tag selected">
-            #else:
-                <a href="?tag=#(tag)" class="tag">
-            #endif
-                    #(tag)
-                </a>
-        #endfor
-    </div>
+<div class="header-greeting">
+    <img src="author-photo.jpg" alt="author photo">
+    <h1>Hey it's Katya Tinmey!</h1>
+    <p>I’m a graphic designer born and raised in Siberia, currently live in Austin, TX. After working four years in Automotive Business in Sales analysis, I enrolled in art school and completed my degree in graphic design. Last couple of years I devoted myself to book cover design.</p>
+    <div class="tag-list all">
+            #for(tag in header.availableTags):
+                #if(tag == header.selectedTag):
+                    <a href="?" class="tag selected">
+                #else:
+                    <a href="?tag=#(tag)" class="tag">
+                #endif
+                        #(tag)
+                    </a>
+            #endfor
+        </div>
 </div>

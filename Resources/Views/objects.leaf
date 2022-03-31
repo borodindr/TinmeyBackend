@@ -1,3 +1,0 @@
-#for(work in works):
-    #extend("work")
-#endfor

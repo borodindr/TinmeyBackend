@@ -1,7 +1,0 @@
-#if(item.content.body):
-    #import("--itemBody")
-#elseif(item.content.image):
-    #extend("itemImage")
-#elseif(item.content.clear):
-    #extend("itemClear")
-#endif

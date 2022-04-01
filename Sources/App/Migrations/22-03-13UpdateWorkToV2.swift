@@ -14,7 +14,7 @@ struct UpdateWorkToV2: AsyncMigration {
         let works = try await Work.ModelUpdatingWorkToV2.query(on: database).all()
         for work in works {
             if let url = work.seeMoreLink {
-                work.description = work.description + "\n" + url
+                work.description = work.description + "\n" + "[See more](" + url + ")"
                 try await work.save(on: database)
             }
         }

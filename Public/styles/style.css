@@ -28,8 +28,8 @@
     
     --nav-side-opposite-shift: calc(100vw / 2 + var(--content-width) / 2 + 1rem);
     --nav-logo-width: 2.5rem;
-    --nav-contact-width: 2rem;
-    --nav-contact-spacing: 0.5rem;
+    --nav-contact-width: 2.3rem;
+    --nav-contact-spacing: 0.2rem;
 
     --header-top-padding: var(--content-top-padding);
     --header-bottom-padding: 2.4rem;
@@ -41,11 +41,11 @@
     --header-greeting-body-font-size: 1.2rem;
 
     --works-h-spacing: 0.625rem;
-    --works-v-spacing: 2rem;
+    --works-v-spacing: 2.5rem;
     --works-in-row: 3;
     --works-top-margin: 2rem;
     --work-size: 18.75rem;
-    --work-image-bottom-margin: 0.5rem;
+    --work-image-bottom-margin: 0.6rem;
     
     --tag-list-h-spacing: 0.5rem;
     --tag-list-v-spacing: 0.4rem;
@@ -268,15 +268,29 @@ footer a {
     z-index: 1052;
 }
 
-.fancybox__caption p {
-    font-size: 1rem;
-    color: var(--secondary-text-color);
-}
-
 .fancybox__caption h3 {
     font-size: 1.25rem;
-    color: white;
+    color: var(--bg-color);
+    margin-bottom: 0.4rem;
 }
+
+.fancybox__caption p {
+    font-size: 1rem;
+    color: var(--bg-color);
+}
+
+.fancybox__caption p a {
+    text-decoration: underline;
+}
+
+.fancybox__caption p a:hover {
+    text-decoration: none;
+}
+
+div[data-fancybox] img {
+  cursor: zoom-in;
+}
+
 
 /*dynemic item size for smaller screens then 3 items 300px each*/
 @media (max-width: 1048px) {
@@ -291,7 +305,7 @@ footer a {
         --content-top-padding: 1.2rem;
 
         --nav-contact-width: 2.5rem;
-        --nav-contact-spacing: 0.2rem;
+        --nav-contact-spacing: 0.1rem;
 
         --header-bottom-padding: 1.8rem;
         --header-greeting-width: calc(100% - 2rem);

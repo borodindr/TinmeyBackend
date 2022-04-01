@@ -41,12 +41,14 @@ struct WebsiteController: RouteCollection {
         )
         let workItems: [WorksContext.Work] = try await works
             .compactMap { work in
-                let imageID = try work.images.sorted {
+                let images = work.images.sorted {
                     $0.sortIndex < $1.sortIndex
                 }
-                .first?.requireID().uuidString
-                guard let foundImageID = imageID else { return nil }
-                var otherImagePaths = try work.images
+                
+                guard let firstImageID = try images.first?.requireID().uuidString else {
+                    return nil
+                }
+                var otherImagePaths = try images
                     .map { try $0.requireID().uuidString }
                     .map { "/download/work_images/\($0)" }
                 otherImagePaths.removeFirst()
@@ -54,7 +56,7 @@ struct WebsiteController: RouteCollection {
                 return WorksContext.Work(
                     title: work.title,
                     description: work.description,
-                    coverPath: "/download/work_images/\(foundImageID)",
+                    coverPath: "/download/work_images/\(firstImageID)",
                     otherImagesPaths: otherImagePaths,
                     tags: work.tags.map(\.name)
                 )

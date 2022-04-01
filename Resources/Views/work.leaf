@@ -28,7 +28,8 @@
             class="image-container" 
             data-fancybox="gallery" 
             data-src="#(imagePath)" 
-            data-caption="<h3>#unsafeHTML(work.title)</h3><p>#unsafeHTML(work.description)</p>"
+            data-caption="#unsafeHTML(work.title)"
+            data-caption-body="#unsafeHTML(work.description)"
         >
             <img src="#(imagePath)" alt="image"/>
         </div>

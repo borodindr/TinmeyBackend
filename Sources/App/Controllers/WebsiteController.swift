@@ -28,7 +28,9 @@ struct WebsiteController: RouteCollection {
     func worksHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
         async let works = works(req, tagName: tagName)
-        async let tags = Tag.query(on: req.db).all()
+        async let tags = Tag.query(on: req.db)
+            .sort(\.$name, .ascending)
+            .all()
         async let profile = getMainProfile(req)
         
         let meta = try await WebsiteMeta(title: "Covers", profile: profile)
@@ -58,7 +60,7 @@ struct WebsiteController: RouteCollection {
                     description: work.description,
                     coverPath: "/download/work_images/\(firstImageID)",
                     otherImagesPaths: otherImagePaths,
-                    tags: work.tags.map(\.name)
+                    tags: work.tags.map(\.name).sorted()
                 )
             }
         
@@ -72,67 +74,6 @@ struct WebsiteController: RouteCollection {
         )
         return try await req.view.render("works", context)
     }
-    
-//    func coversHandler(_ req: Request) async throws -> View {
-//        let sectionQuery = Section.query(on: req.db).filter(\.$type == .covers)
-//        guard let section = try await sectionQuery.first() else {
-//            throw Abort(.notFound)
-//        }
-//
-//        let tagName = req.query[String.self, at: "tag"]
-//        async let works = works(req, tagName: tagName)
-//        async let tags = Tag.query(on: req.db).all()
-//        async let profile = getMainProfile(req)
-//
-//        let meta = try await WebsiteMeta(title: "Covers", profile: profile)
-//        let availableTags = try await tags.map { $0.name }
-//        let header = WorkHeader(
-//            section: section,
-//            availableTags: availableTags,
-//            selectedTag: tagName
-//        )
-//        let context = await WorksContext(
-//            meta: meta,
-//            header: header,
-//            objects: try works.map {
-//                .generate(from: try .generate(from: $0))
-//            },
-//            works: try works.compactMap { try $0.images.first?.requireID().uuidString }.map { .init(coverPath: "/download/work_images/\($0)")}
-//        )
-//        return try await req.view.render("works", context)
-//    }
-    
-//    func layoutsHandler(_ req: Request) async throws -> View {
-//        let sectionQuery = Section.query(on: req.db).filter(\.$type == .layouts)
-//        guard let section = try await sectionQuery.first() else {
-//            throw Abort(.notFound)
-//        }
-//
-//        async let works = allWorks(req)
-//        async let profile = getMainProfile(req)
-//        let meta = try await WebsiteMeta(title: "Layouts", profile: profile)
-//        let header = WorkHeader(section: section)
-//        let context = await WorksContext(
-//            meta: meta,
-//            header: header,
-//            objects: try works.map {
-//                .generate(from: try .generate(from: $0))
-//            },
-//            works: try works.compactMap { try $0.images.first?.requireID().uuidString }.map { .init(coverPath: "/download/work_images/\($0)")}
-//        )
-//        return try await req.view.render("works", context)
-//    }
-    
-//    func getSectionImageHandler(_ req: Request) async throws -> Response {
-//        let sectionType = try Section.SectionType.detect(from: req)
-//        let imageType = try ImageType.detect(from: req)
-//        let sectionQuery = Section.query(on: req.db).filter(\.$type == sectionType)
-//        guard let section = try await sectionQuery.first() else {
-//            throw Abort(.notFound)
-//        }
-//        let imageName = try imageType.imageName(in: section)
-//        return try await req.fileHandler.download(imageName, at: sectionsImageFolder)
-//    }
     
     func getWorkImageHandler(_ req: Request) async throws -> Response {
         guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
@@ -174,7 +115,9 @@ struct WebsiteController: RouteCollection {
     }
     
     func allWorks(_ req: Request) async throws -> [Work] {
-        try await Work.query(on: req.db).with(\.$tags).with(\.$images)
+        try await Work.query(on: req.db)
+            .with(\.$tags)
+            .with(\.$images)
             .sort(\.$sortIndex, .descending)
             .all()
     }

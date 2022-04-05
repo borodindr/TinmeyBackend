@@ -51,7 +51,7 @@ extension WorkAPIModel.Create {
 
 extension Work {
     func convertToAPIModel(on database: Database) async throws-> WorkAPIModel {
-        try await $tags.load(on: database)
+        let tags = try await $tags.query(on: database).sort(\.$name, .ascending).all()
         async let images = $images.query(on: database).sort(\.$sortIndex, .ascending).all()
         return try await WorkAPIModel(
             id: requireID(),

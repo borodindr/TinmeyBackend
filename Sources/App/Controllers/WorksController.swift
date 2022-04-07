@@ -90,7 +90,7 @@ struct WorksController: RouteCollection {
     
     func reorderHandler(_ req: Request) async throws -> WorkAPIModel {
         guard let directionRawValue = req.parameters.get("direction"),
-              let direction = WorkAPIModel.ReorderDirection(rawValue: directionRawValue) else {
+              let direction = ReorderDirectionAPIModel(rawValue: directionRawValue) else {
             throw Abort(.badRequest, reason: "Wrong direction type")
         }
         

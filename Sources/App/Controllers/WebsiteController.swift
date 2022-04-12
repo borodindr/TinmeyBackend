@@ -27,9 +27,8 @@ struct WebsiteController: RouteCollection {
         async let tags = Tag.query(on: req.db)
             .sort(\.$name, .ascending)
             .all()
-        async let profile = getMainProfile(req)
         
-        let meta = try await WebsiteMeta(title: "Portfolio", profile: profile)
+        let meta = WebsiteMeta(title: "Portfolio")
         let availableTags = try await tags.map { $0.name }
         let header = WorkHeader(
             title: "",
@@ -83,17 +82,6 @@ struct WebsiteController: RouteCollection {
         return try await req.fileHandler.download(filename, at: path)
     }
     
-    func getMainProfile(_ req: Request) async throws -> Profile {
-        let query = User.query(on: req.db).filter(\.$isMain == true)
-        guard let mainUser = try await query.first() else {
-            throw Abort(.notFound)
-        }
-        guard let profile = try await mainUser.$profile.get(on: req.db).first else {
-            throw Abort(.notFound)
-        }
-        return profile
-    }
-    
     func works(_ req: Request, tagName: String?) async throws -> [Work] {
         guard let tagName = tagName else {
             return try await allWorks(req)
@@ -118,6 +106,7 @@ struct WebsiteController: RouteCollection {
             .all()
     }
     
+    // TODO: delete it
     func downloadResumeHandler(_ req: Request) async throws -> Response {
         try await req.fileHandler.download(resumeName, at: resumeFolder)
     }
@@ -158,19 +147,15 @@ extension WorksContext {
 
 // MARK: - Meta
 struct WebsiteMeta: Encodable {
-    let canonical: String
-    var siteName: String = "tinmey design"
+    let canonical: String = "https://tinmey.com"
+    let siteName: String = "Katya Tinmey"
     let title: String
-    let author: String
-    let description: String
-    let email: String
+    let author: String = "Katya Tinmey"
+    let description: String = "Hey it's Katya Tinmey!"
+    let email: String = "katya@tinmey.com"
     
-    init(title: String, profile: Profile) {
-        self.canonical = "https://tinmey.com"
+    init(title: String) {
         self.title = title
-        self.author = profile.name
-        self.description = profile.shortAbout
-        self.email = profile.email
     }
 }
 

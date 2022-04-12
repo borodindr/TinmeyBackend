@@ -25,7 +25,6 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.delete(":workID", use: deleteHandler)
         tokenAuthGroup.put(":workID", use: updateHandler)
         tokenAuthGroup.put(":workID", "move", ":newReversedIndex", use: moveHandler)
-        tokenAuthGroup.put(":workID", "reorder", ":direction", use: reorderHandler)
         
         let imagesGroup = worksRoutes.grouped("images")
         imagesGroup.get(":imageID", use: downloadImageHandler)
@@ -140,20 +139,6 @@ struct WorksController: RouteCollection {
         try await workToReorder.save(on: req.db)
         
         return try await workToReorder.convertToAPIModel(on: req.db)
-    }
-    
-    func reorderHandler(_ req: Request) async throws -> WorkAPIModel {
-        guard let directionRawValue = req.parameters.get("direction"),
-              let direction = ReorderDirectionAPIModel(rawValue: directionRawValue) else {
-            throw Abort(.badRequest, reason: "Wrong direction type")
-        }
-        
-        switch direction {
-        case .forward:
-            return try await reorderWorkForward(req)
-        case .backward:
-            return try await reorderWorkBackward(req)
-        }
     }
     
     private func reorderWorkForward(_ req: Request) async throws -> WorkAPIModel {

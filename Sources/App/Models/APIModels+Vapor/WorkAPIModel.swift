@@ -19,7 +19,6 @@ extension TimestampProperty {
 }
 
 extension WorkAPIModel: Content { }
-extension ReorderDirectionAPIModel: Content { }
 
 extension WorkAPIModel.Create {
     func makeWork(sortIndex: Int) -> Work {

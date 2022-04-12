@@ -18,11 +18,7 @@ struct WebsiteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.get(use: worksHandler)
         routes.get("works", use: worksHandler)
-//        routes.get("sections", ":sectionType", ":imageType", use: getSectionImageHandler)
-//        routes.get("covers", use: coversHandler)
-//        routes.get("layouts", use: layoutsHandler)
         routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
-//        routes.get("download", "resume", use: downloadResumeHandler)
     }
     
     func worksHandler(_ req: Request) async throws -> View {

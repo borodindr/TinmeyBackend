@@ -56,7 +56,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateToken())
     app.migrations.add(CreateMainUser(environment: app.environment))
     app.migrations.add(CreateSection())
-    app.migrations.add(CreateAllSections())
+    app.migrations.add(DeleteSection())
     
     app.logger.logLevel = .debug
     try app.autoMigrate().wait()

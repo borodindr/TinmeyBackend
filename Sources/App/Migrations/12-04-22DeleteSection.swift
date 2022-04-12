@@ -10,6 +10,7 @@ import Fluent
 struct DeleteSection: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema(Section.v2021_11_04.schemaName).delete()
+        try await database.enum(Section.SectionType.v2021_11_04.enumName).delete()
     }
     
     func revert(on database: Database) async throws {

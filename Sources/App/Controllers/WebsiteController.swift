@@ -9,7 +9,6 @@ import Vapor
 import Fluent
 
 struct WebsiteController: RouteCollection {
-    let sectionsImageFolder = "SectionImages"
     let worksImageFolder = "WorkImages"
     
     let resumeFolder = "Resume"
@@ -182,17 +181,6 @@ struct WorkHeader: Header {
         self.availableTags = availableTags
         self.selectedTag = selectedTag
     }
-    
-    init(section: Section, availableTags: [String], selectedTag: String?) {
-        self.title = section.previewTitle
-        self.description = section.sectionSubtitle.multilineHTML()
-        self.availableTags = availableTags
-        self.selectedTag = selectedTag
-    }
-    
-    init(section: Section) {
-        self.init(section: section, availableTags: [], selectedTag: nil)
-    }
 }
 
 // MARK: - Item
@@ -276,20 +264,6 @@ extension WebsiteObject {
     }
 }
 
-struct SectionBody: Encodable {
-    let title: String
-    let description: String
-    let buttonDirection: String
-    let buttonText: String
-    
-    init(title: String, description: String, buttonDirection: String, buttonText: String) {
-        self.title = title.multilineHTML()
-        self.description = description.multilineHTML()
-        self.buttonDirection = buttonDirection
-        self.buttonText = buttonText
-    }
-}
-
 struct WorkBody: Encodable {
     let title: String
     let description: String
@@ -299,36 +273,6 @@ struct WorkBody: Encodable {
         self.title = title.multilineHTML()
         self.description = description.multilineHTML()
         self.tags = tags
-    }
-}
-
-extension Array where Element == WebsiteObject<SectionBody>.Content {
-    static func generate(from section: Section) -> [Element] {
-        let firstImageItem = Element.image(imageLink: "/sections/\(section.type.rawValue)/firstImage")
-        let secondImageItem = Element.image(imageLink: "/sections/\(section.type.rawValue)/secondImage")
-        
-        switch section.type {
-        case .covers:
-            let bodyItem = Element.body(body: SectionBody(
-                title: section.previewTitle,
-                description: section.previewSubtitle,
-                buttonDirection: "/\(section.type.rawValue)",
-                buttonText: "Show works"
-            )
-            )
-            return [firstImageItem, secondImageItem, bodyItem]
-            
-        case .layouts:
-            let bodyItem = Element.body(body: SectionBody(
-                title: section.previewTitle,
-                description: section.previewSubtitle,
-                buttonDirection: "https://www.behance.net/gallery/61774655/Japanese-book-design",//"/\(section.type.rawValue)",
-                buttonText: "Behance"//"Show works"
-            )
-            )
-            return [firstImageItem, bodyItem, .clear]
-            
-        }
     }
 }
 

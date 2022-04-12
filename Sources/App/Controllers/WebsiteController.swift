@@ -16,12 +16,12 @@ struct WebsiteController: RouteCollection {
     let resumeName = "Katya_Tinmey-Resume.pdf"
     
     func boot(routes: RoutesBuilder) throws {
-        routes.get(use: worksHandler)
-        routes.get("works", use: worksHandler)
+        routes.get(use: portfolioHandler)
+        routes.get("portfolio", use: portfolioHandler)
         routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
     }
     
-    func worksHandler(_ req: Request) async throws -> View {
+    func portfolioHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
         async let works = works(req, tagName: tagName)
         async let tags = Tag.query(on: req.db)
@@ -29,7 +29,7 @@ struct WebsiteController: RouteCollection {
             .all()
         async let profile = getMainProfile(req)
         
-        let meta = try await WebsiteMeta(title: "Covers", profile: profile)
+        let meta = try await WebsiteMeta(title: "Portfolio", profile: profile)
         let availableTags = try await tags.map { $0.name }
         let header = WorkHeader(
             title: "",

@@ -24,6 +24,7 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.post(use: createHandler)
         tokenAuthGroup.delete(":workID", use: deleteHandler)
         tokenAuthGroup.put(":workID", use: updateHandler)
+        tokenAuthGroup.put(":workID", "move", ":newReversedIndex", use: moveHandler)
         tokenAuthGroup.put(":workID", "reorder", ":direction", use: reorderHandler)
         
         let imagesGroup = worksRoutes.grouped("images")
@@ -86,6 +87,59 @@ struct WorksController: RouteCollection {
         try await Tag.update(to: updatedWorkData.tags, in: work, on: req.db)
         try await work.updateImages(to: updatedWorkData.images, on: req.db, fileHandler: req.fileHandler)
         return try await work.convertToAPIModel(on: req.db)
+    }
+    
+    func moveHandler(_ req: Request) async throws -> WorkAPIModel {
+        guard let newReversedIndex: Int = req.parameters.get("newReversedIndex") else {
+            throw Abort(.badRequest, reason: "New index not found")
+        }
+        guard let workToReorder = try await Work.find(req.parameters.get("workID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        // reverse index
+        let worksCount = try await Work.query(on: req.db).count()
+        let newIndex = worksCount - newReversedIndex - 1
+        
+        guard newIndex >= 0 && newIndex < worksCount else {
+            throw Abort(.badRequest, reason: "New index is out of bounds")
+        }
+        
+        guard workToReorder.sortIndex != newIndex else {
+            return try await workToReorder.convertToAPIModel(on: req.db)
+        }
+        
+        let oldIndex = workToReorder.sortIndex
+        
+        if newIndex < oldIndex {
+            let worksToShift = try await Work.query(on: req.db)
+                .group { group in
+                    group
+                        .filter(\.$sortIndex >= newIndex)
+                        .filter(\.$sortIndex < oldIndex)
+                }
+                .all()
+            for work in worksToShift {
+                work.sortIndex += 1
+                try await work.save(on: req.db)
+            }
+        } else {
+            let worksToShift = try await Work.query(on: req.db)
+                .group { group in
+                    group
+                        .filter(\.$sortIndex > oldIndex)
+                        .filter(\.$sortIndex <= newIndex)
+                }
+                .all()
+            for work in worksToShift {
+                work.sortIndex -= 1
+                try await work.save(on: req.db)
+            }
+        }
+        
+        workToReorder.sortIndex = newIndex
+        try await workToReorder.save(on: req.db)
+        
+        return try await workToReorder.convertToAPIModel(on: req.db)
     }
     
     func reorderHandler(_ req: Request) async throws -> WorkAPIModel {

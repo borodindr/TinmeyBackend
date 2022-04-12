@@ -73,7 +73,7 @@
 
         <header>
             <div class="wrapper">
-                    #import("--header")
+                #extend("header")
             </div>
         </header>
         <div class="wrapper">

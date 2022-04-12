@@ -1,16 +1,9 @@
 #extend("base"):
-
-	#export("--header"):
-		#extend("headerWorks")
-	#endexport
-
 	#export("--content"):
-		
 		<div class="works">
 			#for(work in works):
 	    		#extend("work")
 			#endfor
 		</div>
 	#endexport
-
 #endextend

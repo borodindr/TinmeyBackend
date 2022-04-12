@@ -17,6 +17,7 @@ struct WebsiteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.get(use: portfolioHandler)
         routes.get("portfolio", use: portfolioHandler)
+        routes.get("layouts", use: layoutsHandler)
         routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
     }
     
@@ -58,15 +59,34 @@ struct WebsiteController: RouteCollection {
                 )
             }
         
-        let context = await WorksContext(
+        let context = WorksContext(
             meta: meta,
             header: header,
-            objects: try works.map {
-                .generate(from: try .generate(from: $0))
-            },
             works: workItems
         )
         return try await req.view.render("works", context)
+    }
+    
+    func layoutsHandler(_ req: Request) async throws -> View {
+        let tagName = req.query[String.self, at: "tag"]
+        async let tags = Tag.query(on: req.db)
+            .sort(\.$name, .ascending)
+            .all()
+        
+        let meta = WebsiteMeta(title: "Portfolio")
+        let availableTags = try await tags.map { $0.name }
+        let header = WorkHeader(
+            title: "",
+            description: "",
+            availableTags: availableTags,
+            selectedTag: tagName
+        )
+        
+        let context = LayoutsContext(
+            meta: meta,
+            header: header
+        )
+        return try await req.view.render("layouts", context)
     }
     
     func getWorkImageHandler(_ req: Request) async throws -> Response {
@@ -122,7 +142,6 @@ protocol WebsiteContext: Encodable {
 struct WorksContext: WebsiteContext {
     let meta: WebsiteMeta
     let header: WorkHeader
-    let objects: [WebsiteObject<WorkBody>]
     let works: [Work]
 }
 
@@ -142,6 +161,11 @@ extension WorksContext {
         let otherImagesPaths: [String]
         let tags: [String]
     }
+}
+
+struct LayoutsContext: WebsiteContext {
+    let meta: WebsiteMeta
+    let header: WorkHeader
 }
 
 // MARK: - Meta
@@ -180,116 +204,6 @@ struct WorkHeader: Header {
         self.description = description
         self.availableTags = availableTags
         self.selectedTag = selectedTag
-    }
-}
-
-// MARK: - Item
-struct WebsiteObject<Body: Encodable>: Encodable {
-    var rows: [Row]
-    
-    static func generate(from contents: [Content]) -> Self {
-        let columns = 3
-        
-        var result = [Row]()
-        
-        let rowsCount = contents.count / columns
-        
-        for rowIndex in 0..<rowsCount {
-            var items = [Item]()
-            let firstItemIndex = rowIndex * columns
-            let lastItemIndex = firstItemIndex + columns - 1
-            var isPreviousImage = false
-            for itemIndex in firstItemIndex...lastItemIndex {
-                if itemIndex < contents.count {
-                    let indexInRow = itemIndex - rowIndex * columns
-                    let isFirst = indexInRow == 0
-                    let content = contents[itemIndex]
-                    
-                    let leftSep: SeparatorStyle
-                    
-                    if isFirst {
-                        leftSep = .none
-                    } else if content.isImage || isPreviousImage {
-                        leftSep = .fill
-                    } else {
-                        leftSep = .clear
-                    }
-                    
-                    let item = Item(
-                        content: content,
-                        leftSeparator: leftSep
-                    )
-                    items.append(item)
-                    
-                    isPreviousImage = content.isImage
-                }
-            }
-            
-            let row = Row(items: items, isLast: rowIndex == rowsCount - 1)
-            result.append(row)
-        }
-        
-        return .init(rows: result)
-    }
-}
-
-extension WebsiteObject {
-    struct Row: Encodable {
-        let items: [Item]
-        let isLast: Bool
-    }
-}
-
-extension WebsiteObject {
-    struct Item: Encodable {
-        let content: Content
-        let leftSeparator: SeparatorStyle
-    }
-    
-    enum Content: Encodable {
-        case body(body: Body)
-        case image(imageLink: String)
-        case clear
-        
-        var isImage: Bool {
-            if case .image = self {
-                return true
-            }
-            return false
-        }
-    }
-    
-    enum SeparatorStyle: String, Encodable {
-        case fill, clear, none
-    }
-}
-
-struct WorkBody: Encodable {
-    let title: String
-    let description: String
-    let tags: [String]
-    
-    init(title: String, description: String, tags: [String]) {
-        self.title = title.multilineHTML()
-        self.description = description.multilineHTML()
-        self.tags = tags
-    }
-}
-
-extension Array where Element == WebsiteObject<WorkBody>.Content {
-    static func generate(from work: Work) throws -> [Element] {
-        var list: [Element] = try work.images
-            .sorted(by: { $0.sortIndex < $1.sortIndex })
-            .map {
-                $0.name == nil ? .clear : try .image(imageLink: "/download/work_images/\($0.requireID().uuidString)")
-            }
-        let body = WorkBody(
-            title: work.title,
-            description: work.description,
-            tags: work.tags.map { $0.name }
-        )
-        list.insert(.body(body: body), at: 0)
-        return list
     }
 }
 

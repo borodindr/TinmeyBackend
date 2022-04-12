@@ -34,7 +34,7 @@ struct CreateProfile: Migration {
     
 }
 
-extension Profile {
+struct Profile {
     enum v2021_11_04 {
         static let schemeName = "profiles"
         static let id = FieldKey(stringLiteral: "id")

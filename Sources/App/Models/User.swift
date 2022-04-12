@@ -23,9 +23,6 @@ final class User: Model, Content {
     @Field(key: v2021_11_04.password)
     var password: String
     
-    @Children(for: \.$user)
-    var profile: [Profile]
-    
     init() { }
     
     init(

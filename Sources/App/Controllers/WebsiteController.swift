@@ -30,9 +30,7 @@ struct WebsiteController: RouteCollection {
         
         let meta = WebsiteMeta(title: "Portfolio")
         let availableTags = try await tags.map { $0.name }
-        let header = WorkHeader(
-            title: "",
-            description: "",
+        let header = Header(
             availableTags: availableTags,
             selectedTag: tagName
         )
@@ -73,11 +71,9 @@ struct WebsiteController: RouteCollection {
             .sort(\.$name, .ascending)
             .all()
         
-        let meta = WebsiteMeta(title: "Portfolio")
+        let meta = WebsiteMeta(title: "Layouts")
         let availableTags = try await tags.map { $0.name }
-        let header = WorkHeader(
-            title: "",
-            description: "",
+        let header = Header(
             availableTags: availableTags,
             selectedTag: tagName
         )
@@ -133,15 +129,13 @@ struct WebsiteController: RouteCollection {
 
 // MARK: - Context
 protocol WebsiteContext: Encodable {
-    associatedtype HeaderType: Header
-    
     var meta: WebsiteMeta { get }
-    var header: HeaderType { get }
+    var header: Header { get }
 }
 
 struct WorksContext: WebsiteContext {
     let meta: WebsiteMeta
-    let header: WorkHeader
+    let header: Header
     let works: [Work]
 }
 
@@ -165,7 +159,7 @@ extension WorksContext {
 
 struct LayoutsContext: WebsiteContext {
     let meta: WebsiteMeta
-    let header: WorkHeader
+    let header: Header
 }
 
 // MARK: - Meta
@@ -183,25 +177,14 @@ struct WebsiteMeta: Encodable {
 }
 
 // MARK: - Header
-protocol Header: Encodable {
-    var title: String { get }
-    var description: String { get }
-}
-
-struct WorkHeader: Header {
-    let title: String
-    let description: String
+struct Header: Encodable {
     let availableTags: [String]
     let selectedTag: String?
     
     init(
-        title: String,
-        description: String,
         availableTags: [String],
         selectedTag: String?
     ) {
-        self.title = title
-        self.description = description
         self.availableTags = availableTags
         self.selectedTag = selectedTag
     }

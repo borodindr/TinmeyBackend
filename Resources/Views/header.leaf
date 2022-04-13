@@ -1,3 +1,11 @@
+<ul>
+    <li #if(meta.title == "Portfolio"): class="selected" #endif>
+        <a href="/portfolio">Portfolio</a>
+    </li>
+    <li #if(meta.title == "Layouts"): class="selected" #endif>
+        <a href="/layouts">Layouts</a>
+    </li>
+</ul>
 <div class="header-greeting">
     <img src="author-photo.jpg" alt="author photo">
     <h1>Hey it's Katya Tinmey!</h1>

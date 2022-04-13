@@ -57,6 +57,8 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateMainUser(environment: app.environment))
     app.migrations.add(CreateSection())
     app.migrations.add(DeleteSection())
+    app.migrations.add(CreateLayout())
+    app.migrations.add(CreateLayoutImage())
     
     app.logger.logLevel = .debug
     try app.autoMigrate().wait()

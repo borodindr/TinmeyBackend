@@ -10,8 +10,6 @@ import Fluent
 import TinmeyCore
 
 struct WorksController: RouteCollection {
-    let imageFolder = "WorkImages"
-    
     func boot(routes: RoutesBuilder) throws {
         let worksRoutes = routes.grouped("api", "works")
         worksRoutes.get(use: getAllHandler)
@@ -31,10 +29,6 @@ struct WorksController: RouteCollection {
         let tokenAuthImagesGroup = imagesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
         tokenAuthImagesGroup.on(.POST, ":imageID", body: .collect(maxSize: "10mb"), use: addImageHandler)
         tokenAuthImagesGroup.delete(":imageID", use: deleteImageHandler)
-        
-        // For preview
-        worksRoutes.get("preview", "firstImage", use: downloadFirstPreviewImageHandler)
-        worksRoutes.get("preview", "secondImage", use: downloadSecondPreviewImageHandler)
     }
     
     func getAllHandler(_ req: Request) async throws -> [WorkAPIModel] {
@@ -211,23 +205,6 @@ struct WorksController: RouteCollection {
         }
         let path = try FilePathBuilder().workImagePath(for: image)
         return try await req.fileHandler.download(filename, at: path)
-    }
-    
-}
-
-private extension WorksController {
-    func downloadFirstPreviewImageHandler(_ req: Request) throws -> Response {
-        downloadPreviewImage(.firstImage, req: req)
-    }
-    
-    func downloadSecondPreviewImageHandler(_ req: Request) throws -> Response {
-        downloadPreviewImage(.secondImage, req: req)
-    }
-    
-    func downloadPreviewImage(_ imageType: ImageType, req: Request) -> Response {
-        let imageName = "Work-(PREVIEW)-\(imageType.rawValue).png"
-        let path = req.application.directory.workingDirectory + imageFolder + "/" + imageName
-        return req.fileio.streamFile(at: path)
     }
     
 }

@@ -17,8 +17,8 @@ struct CreateLayoutImage: AsyncMigration {
                 LayoutImage.v2022_04_13.layoutID,
                 .uuid,
                 .references(
-                    LayoutImage.v2022_04_13.schemaName,
-                    LayoutImage.v2022_04_13.id,
+                    Layout.v2022_04_13.schemaName,
+                    Layout.v2022_04_13.id,
                     onDelete: .cascade
                 )
             )

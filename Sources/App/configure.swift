@@ -59,6 +59,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(DeleteSection())
     app.migrations.add(CreateLayout())
     app.migrations.add(CreateLayoutImage())
+    app.migrations.add(CreateAttachment())
     
     app.logger.logLevel = .debug
     try app.autoMigrate().wait()

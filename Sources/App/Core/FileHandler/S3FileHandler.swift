@@ -27,15 +27,14 @@ struct S3FileHandler: FileHandler {
     }
     
     func download(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Response> {
-        guard let clientETag = request.headers.first(name: .ifNoneMatch) else {
-            return getFile(fileName, at: pathComponents)
-        }
-        return getFileMetadata(for: fileName, at: pathComponents)
+        getFileMetadata(for: fileName, at: pathComponents)
             .flatMap { headOutput in
-                if let fileETag = headOutput.eTag, fileETag == clientETag {
+                if let clientETag = request.headers.first(name: .ifNoneMatch),
+                   let fileETag = headOutput.eTag,
+                   fileETag == clientETag {
                     return request.eventLoop.future(Response(status: .notModified))
                 } else {
-                    return getFile(fileName, at: pathComponents)
+                    return getFile(fileName, at: pathComponents, eTag: headOutput.eTag)
                 }
             }
     }
@@ -46,25 +45,34 @@ struct S3FileHandler: FileHandler {
         return s3.headObject(request)
     }
     
-    private func getFile(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Response> {
+    private func getFile(_ fileName: String, at pathComponents: [String], eTag: String?) -> EventLoopFuture<Response> {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.GetObjectRequest(bucket: bucketName, key: key)
-        return s3.getObject(request)
-            .map { output in
-                guard let buffer = output.body?.asByteBuffer() else {
-                    return Response(status: .noContent)
-                }
-                var headers: HTTPHeaders = [:]
-                if let eTag = output.eTag {
-                    headers.replaceOrAdd(name: .eTag, value: eTag)
-                }
-                if let fileExtension = fileName.components(separatedBy: ".").last,
-                   let type = HTTPMediaType.fileExtension(fileExtension) {
-                    headers.contentType = type
-                }
-                
-                return Response(status: .ok, headers: headers, body: .init(buffer: buffer))
+        
+        var headers: HTTPHeaders = [:]
+        if let eTag = eTag {
+            headers.replaceOrAdd(name: .eTag, value: eTag)
+        }
+        if let fileExtension = fileName.components(separatedBy: ".").last,
+           let type = HTTPMediaType.fileExtension(fileExtension) {
+            headers.contentType = type
+        }
+        let response = Response(status: .ok, headers: headers)
+        response.body = .init(stream: { stream in
+            s3.getObjectStreaming(request, on: self.request.eventLoop) { buffer, eventLoop in
+                stream.write(.buffer(buffer), promise: eventLoop.makePromise())
+                return eventLoop.makeSucceededVoidFuture()
             }
+            .whenComplete { result in
+                switch result {
+                case .failure(let error):
+                    stream.write(.error(error), promise: nil)
+                case .success:
+                    stream.write(.end, promise: nil)
+                }
+            }
+        })
+        return self.request.eventLoop.makeSucceededFuture(response)
     }
     
     // MARK: - Upload

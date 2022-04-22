@@ -24,18 +24,23 @@ final class LayoutImage: Model, Content {
     @Parent(key: v2022_04_13.layoutID)
     var layout: Layout
     
+    @OptionalParent(key: v2022_04_21.attachmentID)
+    var attachment: Attachment?
+    
     init() { }
     
     init(
         id: UUID? = nil,
         sortIndex: Int,
         name: String? = nil,
-        layoutID: Layout.IDValue
+        layoutID: Layout.IDValue,
+        attachmentID: Attachment.IDValue? = nil
     ) {
         self.id = id
         self.sortIndex = sortIndex
         self.name = name
         self.$layout.id = layoutID
+        self.$attachment.id = attachmentID
     }
 }
 

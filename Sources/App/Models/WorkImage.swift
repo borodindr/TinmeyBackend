@@ -10,19 +10,22 @@ import Fluent
 import TinmeyCore
 
 final class WorkImage: Model, Content {
-    static var schema = v20211219.schemaName
+    static var schema = v2021_12_19.schemaName
     
     @ID
     var id: UUID?
     
-    @Field(key: v20211219.sortIndex)
+    @Field(key: v2021_12_19.sortIndex)
     var sortIndex: Int
     
-    @OptionalField(key: v20211219.name)
+    @OptionalField(key: v2021_12_19.name)
     var name: String?
     
-    @Parent(key: v20211219.workID)
+    @Parent(key: v2021_12_19.workID)
     var work: Work
+    
+    @OptionalParent(key: v2022_04_21.attachmentID)
+    var attachment: Attachment?
     
     init() { }
     
@@ -30,12 +33,14 @@ final class WorkImage: Model, Content {
         id: UUID? = nil,
         sortIndex: Int,
         name: String? = nil,
-        workID: Work.IDValue
+        workID: Work.IDValue,
+        attachmentID: Attachment.IDValue? = nil
     ) {
         self.id = id
         self.sortIndex = sortIndex
         self.name = name
         self.$work.id = workID
+        self.$attachment.id = attachmentID
     }
 }
 

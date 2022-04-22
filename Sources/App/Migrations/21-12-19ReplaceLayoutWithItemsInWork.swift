@@ -194,18 +194,18 @@ extension Work {
 
 extension WorkImage {
     final class ModelReplacingLayoutWithImages: Model {
-        static var schema = v20211219.schemaName
+        static var schema = v2021_12_19.schemaName
         
         @ID
         var id: UUID?
         
-        @Field(key: v20211219.sortIndex)
+        @Field(key: v2021_12_19.sortIndex)
         var sortIndex: Int
         
-        @OptionalField(key: v20211219.name)
+        @OptionalField(key: v2021_12_19.name)
         var name: String?
         
-        @Parent(key: v20211219.workID)
+        @Parent(key: v2021_12_19.workID)
         var work: Work.ModelReplacingLayoutWithImages
         
         init() { }

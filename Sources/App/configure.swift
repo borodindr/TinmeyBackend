@@ -64,6 +64,8 @@ public func configure(_ app: Application) throws {
     app.migrations.add(AddAttachmentToLayoutImage())
     app.migrations.add(MoveFilesFromWorkImageToAttachments(application: app))
     app.migrations.add(MoveFilesFromLayoutImageToAttachments(application: app))
+    app.migrations.add(DeleteNameFromWorkImage())
+    app.migrations.add(DeleteNameFromLayoutImage())
     
     app.logger.logLevel = .debug
     try app.autoMigrate().wait()

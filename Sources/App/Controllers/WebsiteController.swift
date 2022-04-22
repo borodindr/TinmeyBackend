@@ -19,6 +19,7 @@ struct WebsiteController: RouteCollection {
         routes.get("portfolio", use: portfolioHandler)
         routes.get("layouts", use: layoutsHandler)
         routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
+        routes.get("download", "layout_images", ":imageID", use: getLayoutImageHandler)
     }
     
     func portfolioHandler(_ req: Request) async throws -> View {
@@ -78,9 +79,27 @@ struct WebsiteController: RouteCollection {
             selectedTag: tagName
         )
         
+        let layouts = try await Layout.query(on: req.db)
+            .with(\.$images)
+            .sort(\.$sortIndex, .descending)
+            .all()
+            .compactMap { layout -> LayoutsContext.Layout in
+                let images = try layout.images
+                    .sorted { $0.sortIndex < $1.sortIndex }
+                    .map { try $0.requireID().uuidString }
+                    .map { "/download/layout_images/\($0)" }
+                
+                return LayoutsContext.Layout(
+                    title: layout.title,
+                    description: layout.description,
+                    imagePaths: images
+                )
+            }
+        
         let context = LayoutsContext(
             meta: meta,
-            header: header
+            header: header,
+            layouts: layouts
         )
         return try await req.view.render("layouts", context)
     }
@@ -94,6 +113,18 @@ struct WebsiteController: RouteCollection {
             throw Abort(.notFound, reason: reason)
         }
         let path = try FilePathBuilder().workImagePath(for: image)
+        return try await req.fileHandler.download(filename, at: path)
+    }
+    
+    func getLayoutImageHandler(_ req: Request) async throws -> Response {
+        guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
+            throw Abort(.notFound)
+        }
+        guard let filename = image.name else {
+            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
+            throw Abort(.notFound, reason: reason)
+        }
+        let path = try FilePathBuilder().layoutImagePath(for: image)
         return try await req.fileHandler.download(filename, at: path)
     }
     
@@ -141,7 +172,13 @@ struct WorksContext: WebsiteContext {
 
 extension WorksContext {
     struct Work: Encodable {
-        internal init(title: String, description: String, coverPath: String, otherImagesPaths: [String], tags: [String]) {
+        init(
+            title: String,
+            description: String,
+            coverPath: String,
+            otherImagesPaths: [String],
+            tags: [String]
+        ) {
             self.title = title.multilineHTML()
             self.description = description.multilineHTML()
             self.coverPath = coverPath
@@ -160,6 +197,25 @@ extension WorksContext {
 struct LayoutsContext: WebsiteContext {
     let meta: WebsiteMeta
     let header: Header
+    let layouts: [Layout]
+}
+
+extension LayoutsContext {
+    struct Layout: Encodable {
+        init(
+            title: String,
+            description: String,
+            imagePaths: [String]
+        ) {
+            self.title = title.multilineHTML()
+            self.description = description.multilineHTML()
+            self.imagePaths = imagePaths
+        }
+        
+        let title: String
+        let description: String
+        let imagePaths: [String]
+    }
 }
 
 // MARK: - Meta

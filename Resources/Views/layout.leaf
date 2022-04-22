@@ -1,0 +1,23 @@
+<li>
+    <div class="layout">
+        <div class="carousel">
+            #for(path in layout.imagePaths):
+                <div 
+                    class="carousel__slide centering" 
+                    data-fancybox="gallery"  
+                    data-src="#(path)" 
+                    data-caption="#unsafeHTML(layout.title)" 
+                    data-caption-body="#unsafeHTML(layout.description)"
+                >
+                    <img data-lazy-src="#(path)"/>
+                </div>
+            #endfor
+        </div>
+        <h3>#unsafeHTML(layout.title)</h3>
+        <p>
+            <script>
+                document.write(replaceMDLink("#unsafeHTML(layout.description)"))
+            </script>
+        </p>
+    </div>
+</li>

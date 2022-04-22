@@ -36,7 +36,7 @@ struct CreateSection: Migration {
     }
 }
 
-extension Section {
+struct Section {
     enum v2021_11_04 {
         static let schemaName = "sections"
         static let id = FieldKey(stringLiteral: "id")
@@ -50,10 +50,12 @@ extension Section {
     }
 }
 
-extension Section.SectionType {
-    enum v2021_11_04 {
-        static let enumName = "section_type"
-        static let covers = "covers"
-        static let layouts = "layouts"
+extension Section {
+    enum SectionType {
+        enum v2021_11_04 {
+            static let enumName = "section_type"
+            static let covers = "covers"
+            static let layouts = "layouts"
+        }
     }
 }

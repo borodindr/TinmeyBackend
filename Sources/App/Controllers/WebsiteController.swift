@@ -9,35 +9,29 @@ import Vapor
 import Fluent
 
 struct WebsiteController: RouteCollection {
-    let sectionsImageFolder = "SectionImages"
     let worksImageFolder = "WorkImages"
     
     let resumeFolder = "Resume"
     let resumeName = "Katya_Tinmey-Resume.pdf"
     
     func boot(routes: RoutesBuilder) throws {
-        routes.get(use: worksHandler)
-        routes.get("works", use: worksHandler)
-//        routes.get("sections", ":sectionType", ":imageType", use: getSectionImageHandler)
-//        routes.get("covers", use: coversHandler)
-//        routes.get("layouts", use: layoutsHandler)
+        routes.get(use: portfolioHandler)
+        routes.get("portfolio", use: portfolioHandler)
+        routes.get("layouts", use: layoutsHandler)
         routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
-//        routes.get("download", "resume", use: downloadResumeHandler)
+        routes.get("download", "layout_images", ":imageID", use: getLayoutImageHandler)
     }
     
-    func worksHandler(_ req: Request) async throws -> View {
+    func portfolioHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
         async let works = works(req, tagName: tagName)
         async let tags = Tag.query(on: req.db)
             .sort(\.$name, .ascending)
             .all()
-        async let profile = getMainProfile(req)
         
-        let meta = try await WebsiteMeta(title: "Covers", profile: profile)
+        let meta = WebsiteMeta(title: "Portfolio")
         let availableTags = try await tags.map { $0.name }
-        let header = WorkHeader(
-            title: "",
-            description: "",
+        let header = Header(
             availableTags: availableTags,
             selectedTag: tagName
         )
@@ -64,15 +58,50 @@ struct WebsiteController: RouteCollection {
                 )
             }
         
-        let context = await WorksContext(
+        let context = WorksContext(
             meta: meta,
             header: header,
-            objects: try works.map {
-                .generate(from: try .generate(from: $0))
-            },
             works: workItems
         )
         return try await req.view.render("works", context)
+    }
+    
+    func layoutsHandler(_ req: Request) async throws -> View {
+        let tagName = req.query[String.self, at: "tag"]
+        async let tags = Tag.query(on: req.db)
+            .sort(\.$name, .ascending)
+            .all()
+        
+        let meta = WebsiteMeta(title: "Layouts")
+        let availableTags = try await tags.map { $0.name }
+        let header = Header(
+            availableTags: availableTags,
+            selectedTag: tagName
+        )
+        
+        let layouts = try await Layout.query(on: req.db)
+            .with(\.$images)
+            .sort(\.$sortIndex, .descending)
+            .all()
+            .compactMap { layout -> LayoutsContext.Layout in
+                let images = try layout.images
+                    .sorted { $0.sortIndex < $1.sortIndex }
+                    .map { try $0.requireID().uuidString }
+                    .map { "/download/layout_images/\($0)" }
+                
+                return LayoutsContext.Layout(
+                    title: layout.title,
+                    description: layout.description,
+                    imagePaths: images
+                )
+            }
+        
+        let context = LayoutsContext(
+            meta: meta,
+            header: header,
+            layouts: layouts
+        )
+        return try await req.view.render("layouts", context)
     }
     
     func getWorkImageHandler(_ req: Request) async throws -> Response {
@@ -87,15 +116,16 @@ struct WebsiteController: RouteCollection {
         return try await req.fileHandler.download(filename, at: path)
     }
     
-    func getMainProfile(_ req: Request) async throws -> Profile {
-        let query = User.query(on: req.db).filter(\.$isMain == true)
-        guard let mainUser = try await query.first() else {
+    func getLayoutImageHandler(_ req: Request) async throws -> Response {
+        guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        guard let profile = try await mainUser.$profile.get(on: req.db).first else {
-            throw Abort(.notFound)
+        guard let filename = image.name else {
+            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
+            throw Abort(.notFound, reason: reason)
         }
-        return profile
+        let path = try FilePathBuilder().layoutImagePath(for: image)
+        return try await req.fileHandler.download(filename, at: path)
     }
     
     func works(_ req: Request, tagName: String?) async throws -> [Work] {
@@ -122,6 +152,7 @@ struct WebsiteController: RouteCollection {
             .all()
     }
     
+    // TODO: delete it
     func downloadResumeHandler(_ req: Request) async throws -> Response {
         try await req.fileHandler.download(resumeName, at: resumeFolder)
     }
@@ -129,22 +160,25 @@ struct WebsiteController: RouteCollection {
 
 // MARK: - Context
 protocol WebsiteContext: Encodable {
-    associatedtype HeaderType: Header
-    
     var meta: WebsiteMeta { get }
-    var header: HeaderType { get }
+    var header: Header { get }
 }
 
 struct WorksContext: WebsiteContext {
     let meta: WebsiteMeta
-    let header: WorkHeader
-    let objects: [WebsiteObject<WorkBody>]
+    let header: Header
     let works: [Work]
 }
 
 extension WorksContext {
     struct Work: Encodable {
-        internal init(title: String, description: String, coverPath: String, otherImagesPaths: [String], tags: [String]) {
+        init(
+            title: String,
+            description: String,
+            coverPath: String,
+            otherImagesPaths: [String],
+            tags: [String]
+        ) {
             self.title = title.multilineHTML()
             self.description = description.multilineHTML()
             self.coverPath = coverPath
@@ -160,211 +194,55 @@ extension WorksContext {
     }
 }
 
+struct LayoutsContext: WebsiteContext {
+    let meta: WebsiteMeta
+    let header: Header
+    let layouts: [Layout]
+}
+
+extension LayoutsContext {
+    struct Layout: Encodable {
+        init(
+            title: String,
+            description: String,
+            imagePaths: [String]
+        ) {
+            self.title = title.multilineHTML()
+            self.description = description.multilineHTML()
+            self.imagePaths = imagePaths
+        }
+        
+        let title: String
+        let description: String
+        let imagePaths: [String]
+    }
+}
+
 // MARK: - Meta
 struct WebsiteMeta: Encodable {
-    let canonical: String
-    var siteName: String = "tinmey design"
+    let canonical: String = "https://tinmey.com"
+    let siteName: String = "Tinmey Design"
     let title: String
-    let author: String
-    let description: String
-    let email: String
+    let author: String = "Katya Tinmey"
+    let description: String = "I'm Katya Tinmey. Graphic designer."
+    let email: String = "katya@tinmey.com"
     
-    init(title: String, profile: Profile) {
-        self.canonical = "https://tinmey.com"
+    init(title: String) {
         self.title = title
-        self.author = profile.name
-        self.description = profile.shortAbout
-        self.email = profile.email
     }
 }
 
 // MARK: - Header
-protocol Header: Encodable {
-    var title: String { get }
-    var description: String { get }
-}
-
-struct WorkHeader: Header {
-    let title: String
-    let description: String
+struct Header: Encodable {
     let availableTags: [String]
     let selectedTag: String?
     
     init(
-        title: String,
-        description: String,
         availableTags: [String],
         selectedTag: String?
     ) {
-        self.title = title
-        self.description = description
         self.availableTags = availableTags
         self.selectedTag = selectedTag
-    }
-    
-    init(section: Section, availableTags: [String], selectedTag: String?) {
-        self.title = section.previewTitle
-        self.description = section.sectionSubtitle.multilineHTML()
-        self.availableTags = availableTags
-        self.selectedTag = selectedTag
-    }
-    
-    init(section: Section) {
-        self.init(section: section, availableTags: [], selectedTag: nil)
-    }
-}
-
-// MARK: - Item
-struct WebsiteObject<Body: Encodable>: Encodable {
-    var rows: [Row]
-    
-    static func generate(from contents: [Content]) -> Self {
-        let columns = 3
-        
-        var result = [Row]()
-        
-        let rowsCount = contents.count / columns
-        
-        for rowIndex in 0..<rowsCount {
-            var items = [Item]()
-            let firstItemIndex = rowIndex * columns
-            let lastItemIndex = firstItemIndex + columns - 1
-            var isPreviousImage = false
-            for itemIndex in firstItemIndex...lastItemIndex {
-                if itemIndex < contents.count {
-                    let indexInRow = itemIndex - rowIndex * columns
-                    let isFirst = indexInRow == 0
-                    let content = contents[itemIndex]
-                    
-                    let leftSep: SeparatorStyle
-                    
-                    if isFirst {
-                        leftSep = .none
-                    } else if content.isImage || isPreviousImage {
-                        leftSep = .fill
-                    } else {
-                        leftSep = .clear
-                    }
-                    
-                    let item = Item(
-                        content: content,
-                        leftSeparator: leftSep
-                    )
-                    items.append(item)
-                    
-                    isPreviousImage = content.isImage
-                }
-            }
-            
-            let row = Row(items: items, isLast: rowIndex == rowsCount - 1)
-            result.append(row)
-        }
-        
-        return .init(rows: result)
-    }
-}
-
-extension WebsiteObject {
-    struct Row: Encodable {
-        let items: [Item]
-        let isLast: Bool
-    }
-}
-
-extension WebsiteObject {
-    struct Item: Encodable {
-        let content: Content
-        let leftSeparator: SeparatorStyle
-    }
-    
-    enum Content: Encodable {
-        case body(body: Body)
-        case image(imageLink: String)
-        case clear
-        
-        var isImage: Bool {
-            if case .image = self {
-                return true
-            }
-            return false
-        }
-    }
-    
-    enum SeparatorStyle: String, Encodable {
-        case fill, clear, none
-    }
-}
-
-struct SectionBody: Encodable {
-    let title: String
-    let description: String
-    let buttonDirection: String
-    let buttonText: String
-    
-    init(title: String, description: String, buttonDirection: String, buttonText: String) {
-        self.title = title.multilineHTML()
-        self.description = description.multilineHTML()
-        self.buttonDirection = buttonDirection
-        self.buttonText = buttonText
-    }
-}
-
-struct WorkBody: Encodable {
-    let title: String
-    let description: String
-    let tags: [String]
-    
-    init(title: String, description: String, tags: [String]) {
-        self.title = title.multilineHTML()
-        self.description = description.multilineHTML()
-        self.tags = tags
-    }
-}
-
-extension Array where Element == WebsiteObject<SectionBody>.Content {
-    static func generate(from section: Section) -> [Element] {
-        let firstImageItem = Element.image(imageLink: "/sections/\(section.type.rawValue)/firstImage")
-        let secondImageItem = Element.image(imageLink: "/sections/\(section.type.rawValue)/secondImage")
-        
-        switch section.type {
-        case .covers:
-            let bodyItem = Element.body(body: SectionBody(
-                title: section.previewTitle,
-                description: section.previewSubtitle,
-                buttonDirection: "/\(section.type.rawValue)",
-                buttonText: "Show works"
-            )
-            )
-            return [firstImageItem, secondImageItem, bodyItem]
-            
-        case .layouts:
-            let bodyItem = Element.body(body: SectionBody(
-                title: section.previewTitle,
-                description: section.previewSubtitle,
-                buttonDirection: "https://www.behance.net/gallery/61774655/Japanese-book-design",//"/\(section.type.rawValue)",
-                buttonText: "Behance"//"Show works"
-            )
-            )
-            return [firstImageItem, bodyItem, .clear]
-            
-        }
-    }
-}
-
-extension Array where Element == WebsiteObject<WorkBody>.Content {
-    static func generate(from work: Work) throws -> [Element] {
-        var list: [Element] = try work.images
-            .sorted(by: { $0.sortIndex < $1.sortIndex })
-            .map {
-                $0.name == nil ? .clear : try .image(imageLink: "/download/work_images/\($0.requireID().uuidString)")
-            }
-        let body = WorkBody(
-            title: work.title,
-            description: work.description,
-            tags: work.tags.map { $0.name }
-        )
-        list.insert(.body(body: body), at: 0)
-        return list
     }
 }
 

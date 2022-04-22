@@ -33,6 +33,9 @@
 
     --header-top-padding: var(--content-top-padding);
     --header-bottom-padding: 2.4rem;
+    --header-nav-bottom-margin: 1rem;
+    --header-nav-font-size: 1.3rem;
+    --header-nav-h-padding: 1rem;
     --header-greeting-width: 80%;
     --header-greeting-img-width: 60%;
     --header-greeting-img-bottom-margin: 2rem;
@@ -77,6 +80,28 @@ img {
     max-width: 100%;
 }
 
+ul {
+    list-style-type: none;
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+header li {
+    display: inline-block;
+    border-left: 0.15rem solid;
+    padding: 0 var(--header-nav-h-padding);
+    margin-bottom: var(--header-nav-bottom-margin);
+    font-size: var(--header-nav-font-size);
+}
+
+header li:first-child {
+    border: none;
+}
+
+header li.selected a {
+    text-decoration: underline;
+}
+
 .wrapper {
     width: var(--content-width);
     margin-left: auto;
@@ -90,6 +115,7 @@ img {
 .nav-side {
     position: fixed;
     padding-top: var(--content-top-padding);
+    z-index: 1;
 }
 
 .nav-side.left {
@@ -288,7 +314,89 @@ footer a {
 }
 
 div[data-fancybox] img {
-  cursor: zoom-in;
+    cursor: zoom-in;
+}
+
+.layouts {
+    --carousel-slide-width: 100%;
+
+    --carousel-button-width: 3rem;
+    --carousel-button-shift: 0.8rem;
+    --carousel-button-height: 3rem;
+    --carousel-button-svg-width: 1.25rem;
+    --carousel-button-svg-height: 1.25rem;
+    --carousel-button-svg-stroke-width: 2.5;
+    --carousel-button-bg: var(--tag-bg-color);
+    --carousel-button-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px 0 rgb(0 0 0 / 14%), 0 1px 3px 0 rgb(0 0 0 / 12%);
+}
+
+.layouts {
+    max-width: calc(var(--content-width) * 2);
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: var(--works-top-margin);
+    margin-bottom: 4rem;
+}
+
+.layouts > li:not(:last-child) {
+    margin-bottom: 3.5rem;
+}
+
+.layout img {
+    max-height: 30rem;
+}
+
+.layout h3 {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    margin-top: 0.5rem;
+}
+
+.layout p {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-top: 0.4rem;
+    line-height: 1.3rem;
+}
+
+.layout p a {
+    text-decoration: underline;
+}
+
+.layout p a:hover {
+    text-decoration: none;
+}
+
+.carousel.has-dots {
+    margin-bottom: 0;
+}
+
+.carousel__slide {
+    padding: 0 1rem;
+}
+
+.carousel__dots {
+    position: static;
+    margin-top: 0.5rem;
+}
+
+.carousel__dots .carousel__dot {
+    color: var(--nav-bar-bg-color);
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.carousel__dots .carousel__dot:after {
+    width: 0.5rem;
+    height: 0.5rem;
+}
+
+.carousel__button.is-prev {
+    left: var(--carousel-button-shift);
+}
+
+.carousel__button.is-next {
+    right: var(--carousel-button-shift);
 }
 
 
@@ -325,6 +433,10 @@ div[data-fancybox] img {
         --tag-list-all-top-margin: 1.4rem;
     }
 
+    .layouts {
+        --carousel-button-shift: 0.5rem;
+    }
+
     html {
         font-size: calc(100vw / 425 * 16 * 1);
     }
@@ -349,10 +461,14 @@ div[data-fancybox] img {
 
     .work .image-container {
         height: auto;
-        /*max-height: var(--work-size);*/
     }
 
     .work .image-container > img {
         max-height: var(--work-size);
+    }
+
+    .carousel__slide {
+        padding: 0;
+        margin: 0 0.2rem;
     }
 }

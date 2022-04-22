@@ -46,6 +46,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateProfile())
     app.migrations.add(DeleteCurrentStatusInProfile())
     app.migrations.add(AddLocationInProfile())
+    app.migrations.add(DeleteProfile())
     app.migrations.add(CreateWork())
     app.migrations.add(CreateWorkImage())
     app.migrations.add(ReplaceLayoutWithItemsInWork(application: app))
@@ -55,7 +56,9 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateToken())
     app.migrations.add(CreateMainUser(environment: app.environment))
     app.migrations.add(CreateSection())
-    app.migrations.add(CreateAllSections())
+    app.migrations.add(DeleteSection())
+    app.migrations.add(CreateLayout())
+    app.migrations.add(CreateLayoutImage())
     
     app.logger.logLevel = .debug
     try app.autoMigrate().wait()

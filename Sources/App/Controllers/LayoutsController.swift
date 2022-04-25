@@ -14,7 +14,6 @@ struct LayoutsController: RouteCollection {
         let layoutsRoutes = routes.grouped("api", "layouts")
         layoutsRoutes.get(use: getAllHandler)
         layoutsRoutes.get(":layoutID", use: getHandler)
-        layoutsRoutes.get("attachment", ":attachmentID", use: downloadImageHandler)
         
         let tokenAuthMiddleware = Token.authenticator()
         let guardAuthMiddleware = User.guardMiddleware()
@@ -198,17 +197,5 @@ struct LayoutsController: RouteCollection {
         image.$attachment.id = nil
         try await image.save(on: req.db)
         return .noContent
-    }
-    
-    func downloadImageHandler(_ req: Request) async throws -> Response {
-        guard
-            let attachmentID: UUID = req.parameters.get("attachmentID"),
-            let attachment = try await Attachment.find(attachmentID, on: req.db)
-        else {
-            throw Abort(.notFound)
-        }
-        
-        let path = try FilePathBuilder().path(for: attachment)
-        return try await req.fileHandler.download(attachment.name, at: path)
     }
 }

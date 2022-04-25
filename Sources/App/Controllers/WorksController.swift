@@ -14,7 +14,6 @@ struct WorksController: RouteCollection {
         let worksRoutes = routes.grouped("api", "works")
         worksRoutes.get(use: getAllHandler)
         worksRoutes.get(":workID", use: getHandler)
-        worksRoutes.get("attachment", ":attachmentID", use: downloadImageHandler)
         
         let tokenAuthMiddleware = Token.authenticator()
         let guardAuthMiddleware = User.guardMiddleware()
@@ -201,17 +200,4 @@ struct WorksController: RouteCollection {
         try await image.save(on: req.db)
         return .noContent
     }
-    
-    func downloadImageHandler(_ req: Request) async throws -> Response {
-        guard
-            let attachmentID: UUID = req.parameters.get("attachmentID"),
-            let attachment = try await Attachment.find(attachmentID, on: req.db)
-        else {
-            throw Abort(.notFound)
-        }
-        
-        let path = try FilePathBuilder().path(for: attachment)
-        return try await req.fileHandler.download(attachment.name, at: path)
-    }
-    
 }

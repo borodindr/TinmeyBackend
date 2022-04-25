@@ -42,3 +42,9 @@ final class Attachment: Model, Content {
         self.eTag = eTag
     }
 }
+
+extension Attachment {
+    func downloadPath() throws -> String {
+        ["api", "attachments", try requireID().uuidString].joined(separator: "/")
+    }
+}

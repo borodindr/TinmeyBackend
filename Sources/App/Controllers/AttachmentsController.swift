@@ -10,19 +10,20 @@ import Fluent
 
 struct AttachmentsController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let attachmentsRoutes = routes.grouped("api", "attachments")
-        attachmentsRoutes.get(":attachmentID", use: getHandler)
+        routes.get("download", ":attachmentID", ":attachmentName", use: getHandler)
+//        let attachmentsRoutes = routes.grouped("api", "attachments")
     }
     
     func getHandler(_ req: Request) async throws -> Response {
         guard
             let attachmentID: UUID = req.parameters.get("attachmentID"),
-            let attachment = try await Attachment.find(attachmentID, on: req.db)
+            let attachment = try await Attachment.find(attachmentID, on: req.db),
+            let attachmentName: String = req.parameters.get("attachmentName"),
+            attachment.name == attachmentName
         else {
             throw Abort(.notFound)
         }
-        
         let path = try FilePathBuilder().path(for: attachment)
-        return try await req.fileHandler.download(attachment.name, at: path)
+        return try await req.fileHandler.download(attachmentName, at: path)
     }
 }

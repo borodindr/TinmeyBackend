@@ -45,6 +45,6 @@ final class Attachment: Model, Content {
 
 extension Attachment {
     func downloadPath() throws -> String {
-        ["api", "attachments", try requireID().uuidString].joined(separator: "/")
+        ["download", try requireID().uuidString, name].joined(separator: "/")
     }
 }

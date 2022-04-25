@@ -18,7 +18,6 @@ struct WebsiteController: RouteCollection {
         routes.get(use: portfolioHandler)
         routes.get("portfolio", use: portfolioHandler)
         routes.get("layouts", use: layoutsHandler)
-        routes.get("download", ":attachmentID", ":attachmentName", use: getAttachmentHandler)
     }
     
     func portfolioHandler(_ req: Request) async throws -> View {
@@ -47,9 +46,7 @@ struct WebsiteController: RouteCollection {
                 let imagePaths = try work.images
                     .sorted { $0.sortIndex < $1.sortIndex }
                     .compactMap(\.attachment)
-                    .map { attachment -> String in
-                        "/download/\(try attachment.requireID())/\(attachment.name)"
-                    }
+                    .map { try $0.downloadPath() }
                 
                 guard let firstImagePath = imagePaths.first else {
                     return nil
@@ -104,9 +101,7 @@ struct WebsiteController: RouteCollection {
                 let imagePaths = try layout.images
                     .sorted { $0.sortIndex < $1.sortIndex }
                     .compactMap(\.attachment)
-                    .map { attachment -> String in
-                        "/download/\(try attachment.requireID())/\(attachment.name)"
-                    }
+                    .map { try $0.downloadPath() }
                 
                 return LayoutsContext.Layout(
                     title: layout.title,
@@ -121,19 +116,6 @@ struct WebsiteController: RouteCollection {
             layouts: layouts
         )
         return try await req.view.render("layouts", context)
-    }
-    
-    func getAttachmentHandler(_ req: Request) async throws -> Response {
-        guard
-            let attachmentID: UUID = req.parameters.get("attachmentID"),
-            let attachment = try await Attachment.find(attachmentID, on: req.db),
-            let attachmentName: String = req.parameters.get("attachmentName"),
-            attachment.name == attachmentName
-        else {
-            throw Abort(.notFound)
-        }
-        let path = try FilePathBuilder().path(for: attachment)
-        return try await req.fileHandler.download(attachmentName, at: path)
     }
     
     func works(_ req: Request, tagName: String?) async throws -> [Work] {
@@ -158,11 +140,6 @@ struct WebsiteController: RouteCollection {
             .with(\.$images)
             .sort(\.$sortIndex, .descending)
             .all()
-    }
-    
-    // TODO: delete it
-    func downloadResumeHandler(_ req: Request) async throws -> Response {
-        try await req.fileHandler.download(resumeName, at: resumeFolder)
     }
 }
 

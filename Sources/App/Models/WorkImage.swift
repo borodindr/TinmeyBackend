@@ -18,9 +18,6 @@ final class WorkImage: Model, Content {
     @Field(key: v2021_12_19.sortIndex)
     var sortIndex: Int
     
-    @OptionalField(key: v2021_12_19.name)
-    var name: String?
-    
     @Parent(key: v2021_12_19.workID)
     var work: Work
     
@@ -32,13 +29,11 @@ final class WorkImage: Model, Content {
     init(
         id: UUID? = nil,
         sortIndex: Int,
-        name: String? = nil,
         workID: Work.IDValue,
         attachmentID: Attachment.IDValue? = nil
     ) {
         self.id = id
         self.sortIndex = sortIndex
-        self.name = name
         self.$work.id = workID
         self.$attachment.id = attachmentID
     }

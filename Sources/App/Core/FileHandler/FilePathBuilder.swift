@@ -22,4 +22,8 @@ struct FilePathBuilder {
          image.$layout.id.uuidString,
          try image.requireID().uuidString]
     }
+    
+    func path(for attachment: Attachment) throws -> [String] {
+        ["attachments", try attachment.requireID().uuidString]
+    }
 }

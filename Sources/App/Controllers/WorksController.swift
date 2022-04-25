@@ -14,6 +14,7 @@ struct WorksController: RouteCollection {
         let worksRoutes = routes.grouped("api", "works")
         worksRoutes.get(use: getAllHandler)
         worksRoutes.get(":workID", use: getHandler)
+        worksRoutes.get("attachment", ":attachmentID", use: downloadImageHandler)
         
         let tokenAuthMiddleware = Token.authenticator()
         let guardAuthMiddleware = User.guardMiddleware()
@@ -25,7 +26,6 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.put(":workID", "move", ":newReversedIndex", use: moveHandler)
         
         let imagesGroup = worksRoutes.grouped("images")
-        imagesGroup.get(":imageID", use: downloadImageHandler)
         let tokenAuthImagesGroup = imagesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
         tokenAuthImagesGroup.on(.POST, ":imageID", body: .collect(maxSize: "10mb"), use: addImageHandler)
         tokenAuthImagesGroup.delete(":imageID", use: deleteImageHandler)
@@ -174,37 +174,44 @@ struct WorksController: RouteCollection {
         guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let path = try FilePathBuilder().workImagePath(for: image)
+        let attachment = Attachment(name: filename)
+        try await attachment.save(on: req.db)
+        
+        let path = try FilePathBuilder().path(for: attachment)
         try await req.fileHandler.upload(data.file.data, named: filename, at: path)
-        image.name = filename
+        
+        image.$attachment.id = try attachment.requireID()
         try await image.save(on: req.db)
+        
         return .created
     }
     
     func deleteImageHandler(_ req: Request) async throws -> HTTPStatus {
-        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+        guard
+            let imageID: UUID = req.parameters.get("imageID"),
+            let image = try await LayoutImage.find(imageID, on: req.db),
+            let attachment = try await image.$attachment.get(on: req.db)
+        else {
             throw Abort(.notFound)
         }
-        guard let filename = image.name else {
-            throw Abort(.notFound)
-        }
-        let path = try FilePathBuilder().workImagePath(for: image)
-        try await req.fileHandler.delete(filename, at: path)
-        image.name = nil
+        
+        let path = try FilePathBuilder().path(for: attachment)
+        try await req.fileHandler.delete(attachment.name, at: path)
+        image.$attachment.id = nil
         try await image.save(on: req.db)
         return .noContent
     }
     
     func downloadImageHandler(_ req: Request) async throws -> Response {
-        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+        guard
+            let attachmentID: UUID = req.parameters.get("attachmentID"),
+            let attachment = try await Attachment.find(attachmentID, on: req.db)
+        else {
             throw Abort(.notFound)
         }
-        guard let filename = image.name else {
-            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-            throw Abort(.notFound, reason: reason)
-        }
-        let path = try FilePathBuilder().workImagePath(for: image)
-        return try await req.fileHandler.download(filename, at: path)
+        
+        let path = try FilePathBuilder().path(for: attachment)
+        return try await req.fileHandler.download(attachment.name, at: path)
     }
     
 }

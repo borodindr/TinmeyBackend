@@ -18,13 +18,12 @@ struct WebsiteController: RouteCollection {
         routes.get(use: portfolioHandler)
         routes.get("portfolio", use: portfolioHandler)
         routes.get("layouts", use: layoutsHandler)
-        routes.get("download", "work_images", ":imageID", use: getWorkImageHandler)
-        routes.get("download", "layout_images", ":imageID", use: getLayoutImageHandler)
+        routes.get("download", ":attachmentID", ":attachmentName", use: getAttachmentHandler)
     }
     
     func portfolioHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
-        async let works = works(req, tagName: tagName)
+        let workModels = try await works(req, tagName: tagName)
         async let tags = Tag.query(on: req.db)
             .sort(\.$name, .ascending)
             .all()
@@ -35,24 +34,33 @@ struct WebsiteController: RouteCollection {
             availableTags: availableTags,
             selectedTag: tagName
         )
-        let workItems: [WorksContext.Work] = try await works
-            .compactMap { work in
-                let images = work.images.sorted {
-                    $0.sortIndex < $1.sortIndex
-                }
+        
+        for work in workModels {
+            try await work.$images.load(on: req.db)
+            for image in work.images {
+                try await image.$attachment.load(on: req.db)
+            }
+        }
+        
+        let workItems: [WorksContext.Work] = try workModels
+            .compactMap { work -> WorksContext.Work? in
+                let imagePaths = try work.images
+                    .sorted { $0.sortIndex < $1.sortIndex }
+                    .compactMap(\.attachment)
+                    .map { attachment -> String in
+                        "/download/\(try attachment.requireID())/\(attachment.name)"
+                    }
                 
-                guard let firstImageID = try images.first?.requireID().uuidString else {
+                guard let firstImagePath = imagePaths.first else {
                     return nil
                 }
-                var otherImagePaths = try images
-                    .map { try $0.requireID().uuidString }
-                    .map { "/download/work_images/\($0)" }
+                var otherImagePaths = imagePaths
                 otherImagePaths.removeFirst()
                 
                 return WorksContext.Work(
                     title: work.title,
                     description: work.description,
-                    coverPath: "/download/work_images/\(firstImageID)",
+                    coverPath: firstImagePath,
                     otherImagesPaths: otherImagePaths,
                     tags: work.tags.map(\.name).sorted()
                 )
@@ -79,20 +87,31 @@ struct WebsiteController: RouteCollection {
             selectedTag: tagName
         )
         
-        let layouts = try await Layout.query(on: req.db)
+        let layoutModels = try await Layout.query(on: req.db)
             .with(\.$images)
             .sort(\.$sortIndex, .descending)
             .all()
+        
+        for layout in layoutModels {
+            try await layout.$images.load(on: req.db)
+            for image in layout.images {
+                try await image.$attachment.load(on: req.db)
+            }
+        }
+        
+        let layouts = try layoutModels
             .compactMap { layout -> LayoutsContext.Layout in
-                let images = try layout.images
+                let imagePaths = try layout.images
                     .sorted { $0.sortIndex < $1.sortIndex }
-                    .map { try $0.requireID().uuidString }
-                    .map { "/download/layout_images/\($0)" }
+                    .compactMap(\.attachment)
+                    .map { attachment -> String in
+                        "/download/\(try attachment.requireID())/\(attachment.name)"
+                    }
                 
                 return LayoutsContext.Layout(
                     title: layout.title,
                     description: layout.description,
-                    imagePaths: images
+                    imagePaths: imagePaths
                 )
             }
         
@@ -104,28 +123,17 @@ struct WebsiteController: RouteCollection {
         return try await req.view.render("layouts", context)
     }
     
-    func getWorkImageHandler(_ req: Request) async throws -> Response {
-        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+    func getAttachmentHandler(_ req: Request) async throws -> Response {
+        guard
+            let attachmentID: UUID = req.parameters.get("attachmentID"),
+            let attachment = try await Attachment.find(attachmentID, on: req.db),
+            let attachmentName: String = req.parameters.get("attachmentName"),
+            attachment.name == attachmentName
+        else {
             throw Abort(.notFound)
         }
-        guard let filename = image.name else {
-            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-            throw Abort(.notFound, reason: reason)
-        }
-        let path = try FilePathBuilder().workImagePath(for: image)
-        return try await req.fileHandler.download(filename, at: path)
-    }
-    
-    func getLayoutImageHandler(_ req: Request) async throws -> Response {
-        guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
-            throw Abort(.notFound)
-        }
-        guard let filename = image.name else {
-            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-            throw Abort(.notFound, reason: reason)
-        }
-        let path = try FilePathBuilder().layoutImagePath(for: image)
-        return try await req.fileHandler.download(filename, at: path)
+        let path = try FilePathBuilder().path(for: attachment)
+        return try await req.fileHandler.download(attachmentName, at: path)
     }
     
     func works(_ req: Request, tagName: String?) async throws -> [Work] {

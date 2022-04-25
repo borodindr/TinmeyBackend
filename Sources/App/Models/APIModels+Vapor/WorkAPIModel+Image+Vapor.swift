@@ -12,8 +12,8 @@ import TinmeyCore
 extension WorkAPIModel.Image {
     init(_ workImage: WorkImage) throws {
         let path: String?
-        if workImage.name != nil {
-            let directoryPath = ["api", "works", "images", try workImage.requireID().uuidString].joined(separator: "/")
+        if let attachmentID = try workImage.attachment?.requireID() {
+            let directoryPath = ["api", "works", "attachment", attachmentID.uuidString].joined(separator: "/")
             path = "\(directoryPath)"
         } else {
             path = nil

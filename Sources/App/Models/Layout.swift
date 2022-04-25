@@ -56,27 +56,13 @@ extension Layout {
     func deleteImages(
         on database: Database,
         fileHandler: FileHandler
-    ) -> EventLoopFuture<Void> {
-        $images.query(on: database)
-            .all()
-            .flatMapThrowing { images in
-                try images.compactMap { image in
-                    let path = try FilePathBuilder().layoutImagePath(for: image)
-                    if let imageName = image.name {
-                        return fileHandler.delete(imageName, at: path)
-                    } else {
-                        return nil
-                    }
-                }
-            }
-            .flatMap { $0.flatten(on: database.eventLoop) }
-    }
-    
-    func deleteImages(
-        on database: Database,
-        fileHandler: FileHandler
     ) async throws {
-        try await deleteImages(on: database, fileHandler: fileHandler).get()
+        let images = try await $images.query(on: database).with(\.$attachment).all()
+        for image in images {
+            guard let attachment = image.attachment else { continue }
+            let path = try FilePathBuilder().path(for: attachment)
+            try await fileHandler.delete(attachment.name, at: path)
+        }
     }
     
     func updateImages(
@@ -84,7 +70,7 @@ extension Layout {
         on database: Database,
         fileHandler: FileHandler
     ) -> EventLoopFuture<Void> {
-        $images.get(on: database)
+        $images.query(on: database).with(\.$attachment).all()
             .flatMap { images in
                 var images = images
                 return newImages.enumerated().map { newImageIndex, newImage -> EventLoopFuture<Void> in
@@ -115,9 +101,15 @@ extension Layout {
                     return images.flatMap { image -> [EventLoopFuture<Void>] in
                         let deleteFileTask: EventLoopFuture<Void>
                         let deleteModelTask = image.delete(on: database)
-                        let path = try! FilePathBuilder().layoutImagePath(for: image)
-                        if let imageName = image.name {
-                            deleteFileTask = fileHandler.delete(imageName, at: path)
+                        if let attachmentId = try? image.attachment?.requireID() {
+                            deleteFileTask = Attachment.find(attachmentId, on: database)
+                                .flatMap { attachment in
+                                    guard let attachment = attachment else {
+                                        return database.eventLoop.makeSucceededVoidFuture()
+                                    }
+                                    let path = try! FilePathBuilder().path(for: attachment)
+                                    return fileHandler.delete(attachment.name, at: path)
+                                }
                         } else {
                             deleteFileTask = database.eventLoop.makeSucceededVoidFuture()
                         }

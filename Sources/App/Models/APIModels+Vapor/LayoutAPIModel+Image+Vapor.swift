@@ -12,8 +12,8 @@ import TinmeyCore
 extension LayoutAPIModel.Image {
     init(_ layoutImage: LayoutImage) throws {
         let path: String?
-        if layoutImage.name != nil {
-            let directoryPath = ["api", "layouts", "images", try layoutImage.requireID().uuidString].joined(separator: "/")
+        if let attachmentID = try layoutImage.attachment?.requireID() {
+            let directoryPath = ["api", "layouts", "attachment", attachmentID.uuidString].joined(separator: "/")
             path = "\(directoryPath)"
         } else {
             path = nil

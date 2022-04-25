@@ -20,8 +20,8 @@ struct ReplaceLayoutWithItemsInWork: Migration {
                 Work.ModelReplacingLayoutWithImages.query(on: database)
                     .all()
             }
-            .flatMapEachThrowing { work -> (Work.ModelReplacingLayoutWithImages, [WorkImage]) in
-                let images: [WorkImage]
+            .flatMapEachThrowing { work -> (Work.ModelReplacingLayoutWithImages, [WorkImage.ModelReplacingLayoutWithImages]) in
+                let images: [WorkImage.ModelReplacingLayoutWithImages]
                 let bodyIndex: Int
                 let workID = try work.requireID()
 
@@ -73,7 +73,9 @@ struct ReplaceLayoutWithItemsInWork: Migration {
                             return database.eventLoop.future()
                         }
                         do {
-                            let dstPathComponents = try FilePathBuilder().workImagePath(for: image)
+                            let dstPathComponents = ["WorkImages",
+                                                     image.$work.id.uuidString,
+                                                     try image.requireID().uuidString]
                             let request = Request(application: application, on: database.eventLoop)
                             
                             return request.fileHandler.move(imageName, at: "WorkImages", to: dstPathComponents)
@@ -148,14 +150,16 @@ struct ReplaceLayoutWithItemsInWork: Migration {
                     .flatMap { work.save(on: database) }
             }
             .flatMap {
-                WorkImage.query(on: database).all()
+                WorkImage.ModelReplacingLayoutWithImages.query(on: database).all()
             }
             .flatMapEach(on: database.eventLoop) { image in
                 guard let imageName = image.name else {
                     return database.eventLoop.future()
                 }
                 do {
-                    let srcPathComponents = try FilePathBuilder().workImagePath(for: image)
+                    let srcPathComponents = ["WorkImages",
+                                             image.$work.id.uuidString,
+                                             try image.requireID().uuidString]
                     let request = Request(application: application, on: database.eventLoop)
                     
                     return request.fileHandler.move(imageName, at: srcPathComponents, to: "WorkImages")
@@ -166,20 +170,20 @@ struct ReplaceLayoutWithItemsInWork: Migration {
     }
 }
 
-extension Work {
+fileprivate extension Work {
     final class ModelReplacingLayoutWithImages: Model {
-        static var schema = Work.v2021_11_04.schemaName
+        static var schema = v2021_11_04.schemaName
         
         @ID
         var id: UUID?
         
-        @Enum(key: Work.v2021_11_04.layout)
+        @Enum(key: v2021_11_04.layout)
         var layout: LayoutType
         
-        @OptionalField(key: Work.v2021_11_04.firstImageName)
+        @OptionalField(key: v2021_11_04.firstImageName)
         var firstImageName: String?
         
-        @OptionalField(key: Work.v2021_11_04.secondImageName)
+        @OptionalField(key: v2021_11_04.secondImageName)
         var secondImageName: String?
         
         @Field(key: v2021_12_30.bodyIndex)
@@ -192,7 +196,7 @@ extension Work {
     }
 }
 
-extension WorkImage {
+fileprivate extension WorkImage {
     final class ModelReplacingLayoutWithImages: Model {
         static var schema = v2021_12_19.schemaName
         
@@ -209,5 +213,17 @@ extension WorkImage {
         var work: Work.ModelReplacingLayoutWithImages
         
         init() { }
+        
+        init(
+            id: UUID? = nil,
+            sortIndex: Int,
+            name: String?,
+            workID: Work.IDValue
+        ) {
+            self.id = id
+            self.sortIndex = sortIndex
+            self.name = name
+            self.$work.id = workID
+        }
     }
 }

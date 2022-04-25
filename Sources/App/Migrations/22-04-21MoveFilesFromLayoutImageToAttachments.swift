@@ -12,7 +12,7 @@ struct MoveFilesFromLayoutImageToAttachments: AsyncMigration {
     let application: Application
     
     func prepare(on database: Database) async throws {
-        let images = try await LayoutImage.query(on: database).all()
+        let images = try await LayoutImage.ModelMovingFilesFromLayoutImageToAttachments.query(on: database).all()
         for image in images {
             guard let imageName = image.name else { continue }
             let attachment = Attachment(name: imageName)
@@ -46,5 +46,25 @@ struct MoveFilesFromLayoutImageToAttachments: AsyncMigration {
             
             try await attachment.delete(on: database)
         }
+    }
+}
+
+extension LayoutImage {
+    final class ModelMovingFilesFromLayoutImageToAttachments: Model, Content {
+        static var schema = v2022_04_13.schemaName
+        
+        @ID
+        var id: UUID?
+        
+        @OptionalField(key: v2022_04_13.name)
+        var name: String?
+        
+        @Parent(key: v2022_04_13.layoutID)
+        var layout: Layout
+        
+        @OptionalParent(key: v2022_04_21.attachmentID)
+        var attachment: Attachment?
+        
+        init() { }
     }
 }

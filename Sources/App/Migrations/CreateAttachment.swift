@@ -14,7 +14,6 @@ struct CreateAttachment: AsyncMigration {
             .field(Attachment.v2022_04_21.createdAt, .string)
             .field(Attachment.v2022_04_21.updatedAt, .string)
             .field(Attachment.v2022_04_21.name, .string, .required)
-            .field(Attachment.v2022_04_21.eTag, .string)
             .create()
     }
     
@@ -30,6 +29,5 @@ extension Attachment {
         static let createdAt = FieldKey(stringLiteral: "created_at")
         static let updatedAt = FieldKey(stringLiteral: "updated_at")
         static let name = FieldKey(stringLiteral: "name")
-        static let eTag = FieldKey(stringLiteral: "etag")
     }
 }

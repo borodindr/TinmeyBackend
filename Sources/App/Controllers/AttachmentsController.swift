@@ -23,7 +23,6 @@ struct AttachmentsController: RouteCollection {
         else {
             throw Abort(.notFound)
         }
-        let path = try FilePathBuilder().path(for: attachment)
-        return try await req.fileHandler.download(attachmentName, at: path)
+        return try await req.attachmentHandler.download(attachment)
     }
 }

@@ -54,7 +54,7 @@ struct LayoutsController: RouteCollection {
             throw Abort(.notFound)
         }
         let sortIndex = layout.sortIndex
-        try await layout.deleteImages(on: req.db, fileHandler: req.fileHandler)
+        try await layout.deleteImages(on: req.db, attachmentHandler: req.attachmentHandler)
         try await layout.delete(on: req.db)
         let layoutsToUpdateQuery = Layout.query(on: req.db).filter(\.$sortIndex > sortIndex)
         let layoutsToUpdate = try await layoutsToUpdateQuery.all()
@@ -75,7 +75,7 @@ struct LayoutsController: RouteCollection {
         layout.title = updatedLayoutData.title
         layout.description = updatedLayoutData.description
         try await layout.save(on: req.db)
-        try await layout.updateImages(to: updatedLayoutData.images, on: req.db, fileHandler: req.fileHandler)
+        try await layout.updateImages(to: updatedLayoutData.images, on: req.db, attachmentHandler: req.attachmentHandler)
         return try await layout.convertToAPIModel(on: req.db)
     }
     
@@ -171,11 +171,7 @@ struct LayoutsController: RouteCollection {
         guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let attachment = Attachment(name: filename)
-        try await attachment.save(on: req.db)
-        
-        let path = try FilePathBuilder().path(for: attachment)
-        try await req.fileHandler.upload(data.file.data, named: filename, at: path)
+        let attachment = try await req.attachmentHandler.create(from: data.file.data, named: filename)
         
         image.$attachment.id = try attachment.requireID()
         try await image.save(on: req.db)
@@ -192,8 +188,7 @@ struct LayoutsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let path = try FilePathBuilder().path(for: attachment)
-        try await req.fileHandler.delete(attachment.name, at: path)
+        try await req.attachmentHandler.delete(attachment)
         image.$attachment.id = nil
         try await image.save(on: req.db)
         return .noContent

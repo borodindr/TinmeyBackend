@@ -23,28 +23,28 @@ final class Attachment: Model, Content {
     @Field(key: v2022_04_21.name)
     var name: String
     
-    @OptionalField(key: v2022_04_21.eTag)
-    var eTag: String?
-    
     init() { }
     
     init(
         id: UUID? = nil,
         createdAt: Date? = nil,
         updatedAt: Date? = nil,
-        name: String,
-        eTag: String? = nil
+        name: String
     ) {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.name = name
-        self.eTag = eTag
     }
 }
 
 extension Attachment {
     func downloadPath() throws -> String {
         ["download", try requireID().uuidString, name].joined(separator: "/")
+    }
+    
+    func generateETag() -> String? {
+        guard let updatedAt = updatedAt, let id = id else { return nil }
+        return "\(updatedAt.timeIntervalSince1970)-\(id.uuidString)"
     }
 }

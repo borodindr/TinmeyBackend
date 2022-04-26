@@ -68,20 +68,20 @@ extension Work {
 extension Work {
     func deleteImages(
         on database: Database,
-        fileHandler: FileHandler
+        attachmentHandler: AttachmentHandler
     ) async throws {
-        let images = try await $images.query(on: database).with(\.$attachment).all()
-        for image in images {
-            guard let attachment = image.attachment else { continue }
-            let path = try FilePathBuilder().path(for: attachment)
-            try await fileHandler.delete(attachment.name, at: path)
-        }
+        let attachments = try await $images.query(on: database)
+            .with(\.$attachment)
+            .all()
+            .compactMap(\.attachment)
+            
+        try await attachmentHandler.delete(attachments)
     }
     
     func updateImages(
         to newImages: [WorkAPIModel.Image.Create],
         on database: Database,
-        fileHandler: FileHandler
+        attachmentHandler: AttachmentHandler
     ) -> EventLoopFuture<Void> {
         $images.query(on: database).with(\.$attachment).all()
             .flatMap { images in
@@ -120,10 +120,9 @@ extension Work {
                                     guard let attachment = attachment else {
                                         return database.eventLoop.makeSucceededVoidFuture()
                                     }
-                                    let path = try! FilePathBuilder().path(for: attachment)
                                     let promise = database.eventLoop.makePromise(of: Void.self)
                                     promise.completeWithTask {
-                                        try await fileHandler.delete(attachment.name, at: path)
+                                        try await attachmentHandler.delete(attachment)
                                     }
                                     return promise.futureResult
                                 }
@@ -141,8 +140,8 @@ extension Work {
     func updateImages(
         to newImages: [WorkAPIModel.Image.Create],
         on database: Database,
-        fileHandler: FileHandler
+        attachmentHandler: AttachmentHandler
     ) async throws {
-        try await updateImages(to: newImages, on: database, fileHandler: fileHandler).get()
+        try await updateImages(to: newImages, on: database, attachmentHandler: attachmentHandler).get()
     }
 }

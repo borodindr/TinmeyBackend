@@ -34,6 +34,8 @@ function replaceMDLink(body) {
 Fancybox.bind('[data-fancybox="gallery"]', {
 	dragToClose: false,
 
+	preload: 0,
+
 	Toolbar: false,
 	closeButton: "top",
 

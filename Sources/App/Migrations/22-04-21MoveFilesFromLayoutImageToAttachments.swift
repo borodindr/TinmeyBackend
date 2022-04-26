@@ -25,7 +25,9 @@ struct MoveFilesFromLayoutImageToAttachments: AsyncMigration {
             let dstPath = ["attachments", try attachment.requireID().uuidString]
             let request = Request(application: application, on: database.eventLoop)
             
-            try await request.fileHandler.move(imageName, at: srcPath, to: dstPath)
+            do {
+                try await request.fileHandler.move(imageName, at: srcPath, to: dstPath)
+            } catch let error as Abort where error.status == .notFound { }
         }
     }
     

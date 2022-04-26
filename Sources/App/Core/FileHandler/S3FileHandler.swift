@@ -61,7 +61,11 @@ struct S3FileHandler: FileHandler {
     func upload(_ data: ByteBuffer, named filename: String, at pathComponents: [String]) async throws {
         let key = objectRequestKey(for: filename, at: pathComponents)
         let request = S3.PutObjectRequest(body: .byteBuffer(data), bucket: bucketName, key: key)
-        _ = try await s3.putObject(request)
+        do {
+            _ = try await s3.putObject(request)
+        } catch let error as S3ErrorType where error == .noSuchKey {
+            throw Abort(.notFound)
+        }
     }
     
     // MARK: - Delete
@@ -72,7 +76,11 @@ struct S3FileHandler: FileHandler {
     func delete(_ filename: String, at pathComponents: [String]) async throws {
         let key = objectRequestKey(for: filename, at: pathComponents)
         let request = S3.DeleteObjectRequest(bucket: bucketName, key: key)
-        _ = try await  s3.deleteObject(request)
+        do {
+            _ = try await s3.deleteObject(request)
+        } catch let error as S3ErrorType where error == .noSuchKey {
+            throw Abort(.notFound)
+        }
     }
     
     func delete(_ filenames: [String], at pathComponents: String...) async throws {
@@ -88,7 +96,11 @@ struct S3FileHandler: FileHandler {
             .map { S3.ObjectIdentifier(key: $0) }
         let delete = S3.Delete(objects: objects)
         let request = S3.DeleteObjectsRequest(bucket: bucketName, delete: delete)
-        _ = try await s3.deleteObjects(request)
+        do {
+            _ = try await s3.deleteObjects(request)
+        } catch let error as S3ErrorType where error == .noSuchKey {
+            throw Abort(.notFound)
+        }
     }
     
     // MARK: - Move
@@ -115,6 +127,10 @@ struct S3FileHandler: FileHandler {
         let copyRequest = S3.CopyObjectRequest(bucket: bucketName,
                                                copySource: "\(bucketName)/\(srcKey)",
                                                key: dstKey)
-        _ = try await s3.copyObject(copyRequest)
+        do {
+            _ = try await s3.copyObject(copyRequest)
+        } catch let error as S3ErrorType where error == .noSuchKey {
+            throw Abort(.notFound)
+        }
     }
 }

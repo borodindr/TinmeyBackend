@@ -9,11 +9,6 @@ import Vapor
 import Fluent
 
 struct WebsiteController: RouteCollection {
-    let worksImageFolder = "WorkImages"
-    
-    let resumeFolder = "Resume"
-    let resumeName = "Katya_Tinmey-Resume.pdf"
-    
     func boot(routes: RoutesBuilder) throws {
         routes.get(use: portfolioHandler)
         routes.get("portfolio", use: portfolioHandler)
@@ -29,7 +24,7 @@ struct WebsiteController: RouteCollection {
         
         let meta = WebsiteMeta(title: "Portfolio")
         let availableTags = try await tags.map { $0.name }
-        let header = Header(
+        let header = TaggedHeader(
             availableTags: availableTags,
             selectedTag: tagName
         )
@@ -72,17 +67,7 @@ struct WebsiteController: RouteCollection {
     }
     
     func layoutsHandler(_ req: Request) async throws -> View {
-        let tagName = req.query[String.self, at: "tag"]
-        async let tags = Tag.query(on: req.db)
-            .sort(\.$name, .ascending)
-            .all()
-        
         let meta = WebsiteMeta(title: "Layouts")
-        let availableTags = try await tags.map { $0.name }
-        let header = Header(
-            availableTags: availableTags,
-            selectedTag: tagName
-        )
         
         let layoutModels = try await Layout.query(on: req.db)
             .with(\.$images)
@@ -112,7 +97,6 @@ struct WebsiteController: RouteCollection {
         
         let context = LayoutsContext(
             meta: meta,
-            header: header,
             layouts: layouts
         )
         return try await req.view.render("layouts", context)
@@ -140,99 +124,5 @@ struct WebsiteController: RouteCollection {
             .with(\.$images)
             .sort(\.$sortIndex, .descending)
             .all()
-    }
-}
-
-// MARK: - Context
-protocol WebsiteContext: Encodable {
-    var meta: WebsiteMeta { get }
-    var header: Header { get }
-}
-
-struct WorksContext: WebsiteContext {
-    let meta: WebsiteMeta
-    let header: Header
-    let works: [Work]
-}
-
-extension WorksContext {
-    struct Work: Encodable {
-        init(
-            title: String,
-            description: String,
-            coverPath: String,
-            otherImagesPaths: [String],
-            tags: [String]
-        ) {
-            self.title = title.multilineHTML()
-            self.description = description.multilineHTML()
-            self.coverPath = coverPath
-            self.otherImagesPaths = otherImagesPaths
-            self.tags = tags
-        }
-        
-        let title: String
-        let description: String
-        let coverPath: String
-        let otherImagesPaths: [String]
-        let tags: [String]
-    }
-}
-
-struct LayoutsContext: WebsiteContext {
-    let meta: WebsiteMeta
-    let header: Header
-    let layouts: [Layout]
-}
-
-extension LayoutsContext {
-    struct Layout: Encodable {
-        init(
-            title: String,
-            description: String,
-            imagePaths: [String]
-        ) {
-            self.title = title.multilineHTML()
-            self.description = description.multilineHTML()
-            self.imagePaths = imagePaths
-        }
-        
-        let title: String
-        let description: String
-        let imagePaths: [String]
-    }
-}
-
-// MARK: - Meta
-struct WebsiteMeta: Encodable {
-    let canonical: String = "https://tinmey.com"
-    let siteName: String = "Tinmey Design"
-    let title: String
-    let author: String = "Katya Tinmey"
-    let description: String = "I'm Katya Tinmey. Graphic designer."
-    let email: String = "katya@tinmey.com"
-    
-    init(title: String) {
-        self.title = title
-    }
-}
-
-// MARK: - Header
-struct Header: Encodable {
-    let availableTags: [String]
-    let selectedTag: String?
-    
-    init(
-        availableTags: [String],
-        selectedTag: String?
-    ) {
-        self.availableTags = availableTags
-        self.selectedTag = selectedTag
-    }
-}
-
-extension String {
-    func multilineHTML() -> String {
-        self.replacingOccurrences(of: "\n", with: "<br>")
     }
 }

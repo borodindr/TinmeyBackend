@@ -22,30 +22,28 @@ struct S3FileHandler: FileHandler {
     
     
     // MARK: - Download
-    func download(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Response> {
-        download(fileName, at: pathComponents)
+    func download(_ fileName: String, at pathComponents: String...) async throws -> Response {
+        try await download(fileName, at: pathComponents)
     }
     
-    func download(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Response> {
-        getFileMetadata(for: fileName, at: pathComponents)
-            .flatMap { headOutput in
-                if let clientETag = request.headers.first(name: .ifNoneMatch),
-                   let fileETag = headOutput.eTag,
-                   fileETag == clientETag {
-                    return request.eventLoop.future(Response(status: .notModified))
-                } else {
-                    return getFile(fileName, at: pathComponents, eTag: headOutput.eTag)
-                }
-            }
+    func download(_ fileName: String, at pathComponents: [String]) async throws -> Response {
+        let headOutput = try await getFileMetadata(for: fileName, at: pathComponents)
+        if let clientETag = request.headers.first(name: .ifNoneMatch),
+           let fileETag = headOutput.eTag,
+           fileETag == clientETag {
+            return Response(status: .notModified)
+        } else {
+            return try await getFile(fileName, at: pathComponents, eTag: headOutput.eTag)
+        }
     }
     
-    private func getFileMetadata(for fileName: String, at pathComponents: [String]) -> EventLoopFuture<S3.HeadObjectOutput> {
+    private func getFileMetadata(for fileName: String, at pathComponents: [String]) async throws -> S3.HeadObjectOutput {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.HeadObjectRequest(bucket: bucketName, key: key)
-        return s3.headObject(request)
+        return try await s3.headObject(request)
     }
     
-    private func getFile(_ fileName: String, at pathComponents: [String], eTag: String?) -> EventLoopFuture<Response> {
+    private func getFile(_ fileName: String, at pathComponents: [String], eTag: String?) async throws -> Response {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.GetObjectRequest(bucket: bucketName, key: key)
         
@@ -72,79 +70,71 @@ struct S3FileHandler: FileHandler {
                 }
             }
         })
-        return self.request.eventLoop.makeSucceededFuture(response)
+        return response
     }
     
     // MARK: - Upload
-    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: String...) -> EventLoopFuture<Void> {
-        upload(data, named: fileName, at: pathComponents)
+    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: String...) async throws {
+        try await upload(data, named: fileName, at: pathComponents)
     }
     
-    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: [String]) -> EventLoopFuture<Void> {
+    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: [String]) async throws {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.PutObjectRequest(body: .byteBuffer(data), bucket: bucketName, key: key)
-        return s3.putObject(request)
-            .map { _ in }
+        _ = try await s3.putObject(request)
     }
     
     // MARK: - Delete
-    func delete(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Void> {
-        delete(fileName, at: pathComponents)
+    func delete(_ fileName: String, at pathComponents: String...) async throws {
+        try await delete(fileName, at: pathComponents)
     }
     
-    func delete(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Void> {
+    func delete(_ fileName: String, at pathComponents: [String]) async throws {
         let key = objectRequestKey(for: fileName, at: pathComponents)
         let request = S3.DeleteObjectRequest(bucket: bucketName, key: key)
-        return s3.deleteObject(request)
-            .map { _ in }
+        _ = try await  s3.deleteObject(request)
     }
     
-    func delete(_ fileNames: [String], at pathComponents: String...) -> EventLoopFuture<Void> {
-        delete(fileNames, at: pathComponents)
+    func delete(_ fileNames: [String], at pathComponents: String...) async throws {
+        try await delete(fileNames, at: pathComponents)
     }
     
-    func delete(_ fileNames: [String], at pathComponents: [String]) -> EventLoopFuture<Void> {
+    func delete(_ fileNames: [String], at pathComponents: [String]) async throws {
         guard !fileNames.isEmpty else {
-            return s3.eventLoopGroup.next().makeSucceededVoidFuture()
+            return
         }
         let objects = fileNames
             .map { objectRequestKey(for: $0, at: pathComponents) }
             .map { S3.ObjectIdentifier(key: $0) }
         let delete = S3.Delete(objects: objects)
         let request = S3.DeleteObjectsRequest(bucket: bucketName, delete: delete)
-        return s3.deleteObjects(request)
-            .map { _ in }
+        _ = try await s3.deleteObjects(request)
     }
     
     // MARK: - Move
-    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: String...) -> EventLoopFuture<Void> {
-        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: String...) async throws {
+        try await move(fileName, at: srcPathComponents, to: dstPathComponents)
     }
     
-    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: String...) -> EventLoopFuture<Void> {
-        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: String...) async throws {
+        try await move(fileName, at: srcPathComponents, to: dstPathComponents)
     }
     
-    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: [String]) -> EventLoopFuture<Void> {
-        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: [String]) async throws {
+        try await move(fileName, at: srcPathComponents, to: dstPathComponents)
     }
     
-    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) -> EventLoopFuture<Void> {
-        copy(fileName, at: srcPathComponents, to: dstPathComponents)
-            .flatMap { _ in
-                delete(fileName, at: srcPathComponents)
-            }
-            .map { _ in }
+    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) async throws {
+        try await copy(fileName, at: srcPathComponents, to: dstPathComponents)
+        try await delete(fileName, at: srcPathComponents)
     }
     
-    func copy(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) -> EventLoopFuture<Void> {
+    func copy(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) async throws {
         let srcKey = objectRequestKey(for: fileName, at: srcPathComponents)
         let dstKey = objectRequestKey(for: fileName, at: dstPathComponents)
         let copyRequest = S3.CopyObjectRequest(bucket: bucketName,
                                                copySource: "\(bucketName)/\(srcKey)",
                                                key: dstKey)
-        
-        return s3.copyObject(copyRequest)
-            .map { _ in }
+        _ = try await s3.copyObject(copyRequest)
     }
 }

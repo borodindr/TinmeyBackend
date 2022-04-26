@@ -108,7 +108,11 @@ extension Layout {
                                         return database.eventLoop.makeSucceededVoidFuture()
                                     }
                                     let path = try! FilePathBuilder().path(for: attachment)
-                                    return fileHandler.delete(attachment.name, at: path)
+                                    let promise = database.eventLoop.makePromise(of: Void.self)
+                                    promise.completeWithTask {
+                                        try await fileHandler.delete(attachment.name, at: path)
+                                    }
+                                    return promise.futureResult
                                 }
                         } else {
                             deleteFileTask = database.eventLoop.makeSucceededVoidFuture()

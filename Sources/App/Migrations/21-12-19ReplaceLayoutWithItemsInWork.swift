@@ -78,7 +78,12 @@ struct ReplaceLayoutWithItemsInWork: Migration {
                                                      try image.requireID().uuidString]
                             let request = Request(application: application, on: database.eventLoop)
                             
-                            return request.fileHandler.move(imageName, at: "WorkImages", to: dstPathComponents)
+                            
+                            let promise = database.eventLoop.makePromise(of: Void.self)
+                            promise.completeWithTask {
+                                try await request.fileHandler.move(imageName, at: "WorkImages", to: dstPathComponents)
+                            }
+                            return promise.futureResult
                         } catch {
                             return database.eventLoop.makeFailedFuture(error)
                         }
@@ -162,7 +167,11 @@ struct ReplaceLayoutWithItemsInWork: Migration {
                                              try image.requireID().uuidString]
                     let request = Request(application: application, on: database.eventLoop)
                     
-                    return request.fileHandler.move(imageName, at: srcPathComponents, to: "WorkImages")
+                    let promise = database.eventLoop.makePromise(of: Void.self)
+                    promise.completeWithTask {
+                        try await request.fileHandler.move(imageName, at: srcPathComponents, to: "WorkImages")
+                    }
+                    return promise.futureResult
                 } catch {
                     return database.eventLoop.makeFailedFuture(error)
                 }

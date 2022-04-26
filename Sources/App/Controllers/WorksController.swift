@@ -25,7 +25,6 @@ struct WorksController: RouteCollection {
         tokenAuthGroup.put(":workID", "move", ":newReversedIndex", use: moveHandler)
         
         let imagesGroup = worksRoutes.grouped("images")
-        imagesGroup.get(":imageID", use: downloadImageHandler)
         let tokenAuthImagesGroup = imagesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
         tokenAuthImagesGroup.on(.POST, ":imageID", body: .collect(maxSize: "10mb"), use: addImageHandler)
         tokenAuthImagesGroup.delete(":imageID", use: deleteImageHandler)
@@ -56,7 +55,7 @@ struct WorksController: RouteCollection {
         }
         let sortIndex = work.sortIndex
         try await Tag.deleteAll(from: work, on: req.db)
-        try await work.deleteImages(on: req.db, fileHandler: req.fileHandler)
+        try await work.deleteImages(on: req.db, attachmentHandler: req.attachmentHandler)
         try await work.delete(on: req.db)
         let worksToUpdateQuery = Work.query(on: req.db).filter(\.$sortIndex > sortIndex)
         let worksToUpdate = try await worksToUpdateQuery.all()
@@ -78,7 +77,7 @@ struct WorksController: RouteCollection {
         work.description = updatedWorkData.description
         try await work.save(on: req.db)
         try await Tag.update(to: updatedWorkData.tags, in: work, on: req.db)
-        try await work.updateImages(to: updatedWorkData.images, on: req.db, fileHandler: req.fileHandler)
+        try await work.updateImages(to: updatedWorkData.images, on: req.db, attachmentHandler: req.attachmentHandler)
         return try await work.convertToAPIModel(on: req.db)
     }
     
@@ -174,37 +173,26 @@ struct WorksController: RouteCollection {
         guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let path = try FilePathBuilder().workImagePath(for: image)
-        try await req.fileHandler.upload(data.file.data, named: filename, at: path)
-        image.name = filename
+        let attachment = try await req.attachmentHandler.create(from: data.file.data, named: filename)
+        
+        image.$attachment.id = try attachment.requireID()
         try await image.save(on: req.db)
+        
         return .created
     }
     
     func deleteImageHandler(_ req: Request) async throws -> HTTPStatus {
-        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
+        guard
+            let imageID: UUID = req.parameters.get("imageID"),
+            let image = try await LayoutImage.find(imageID, on: req.db),
+            let attachment = try await image.$attachment.get(on: req.db)
+        else {
             throw Abort(.notFound)
         }
-        guard let filename = image.name else {
-            throw Abort(.notFound)
-        }
-        let path = try FilePathBuilder().workImagePath(for: image)
-        try await req.fileHandler.delete(filename, at: path)
-        image.name = nil
+        
+        try await req.attachmentHandler.delete(attachment)
+        image.$attachment.id = nil
         try await image.save(on: req.db)
         return .noContent
     }
-    
-    func downloadImageHandler(_ req: Request) async throws -> Response {
-        guard let image = try await WorkImage.find(req.parameters.get("imageID"), on: req.db) else {
-            throw Abort(.notFound)
-        }
-        guard let filename = image.name else {
-            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-            throw Abort(.notFound, reason: reason)
-        }
-        let path = try FilePathBuilder().workImagePath(for: image)
-        return try await req.fileHandler.download(filename, at: path)
-    }
-    
 }

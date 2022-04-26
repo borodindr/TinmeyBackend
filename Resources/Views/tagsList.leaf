@@ -1,0 +1,11 @@
+<div class="tag-list all">
+    #for(tag in header.availableTags):
+        #if(tag == header.selectedTag):
+            <a href="?" class="tag selected">
+        #else:
+            <a href="?tag=#(tag)" class="tag">
+        #endif
+                #(tag)
+            </a>
+    #endfor
+</div>

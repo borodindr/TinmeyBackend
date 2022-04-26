@@ -31,7 +31,7 @@
             data-caption="#unsafeHTML(work.title)"
             data-caption-body="#unsafeHTML(work.description)"
         >
-            <img src="#(imagePath)" alt="image"/>
+            <img data-lazy-src="#(imagePath)"/>
         </div>
     </div>
 #endfor

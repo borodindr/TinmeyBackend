@@ -68,36 +68,22 @@ extension Work {
 extension Work {
     func deleteImages(
         on database: Database,
-        fileHandler: FileHandler
-    ) -> EventLoopFuture<Void> {
-        $images.query(on: database)
-            .all()
-            .flatMapThrowing { images in
-                try images.compactMap { image in
-                    let path = try FilePathBuilder().workImagePath(for: image)
-                    if let imageName = image.name {
-                        return fileHandler.delete(imageName, at: path)
-                    } else {
-                        return nil
-                    }
-                }
-            }
-            .flatMap { $0.flatten(on: database.eventLoop) }
-    }
-    
-    func deleteImages(
-        on database: Database,
-        fileHandler: FileHandler
+        attachmentHandler: AttachmentHandler
     ) async throws {
-        try await deleteImages(on: database, fileHandler: fileHandler).get()
+        let attachments = try await $images.query(on: database)
+            .with(\.$attachment)
+            .all()
+            .compactMap(\.attachment)
+            
+        try await attachmentHandler.delete(attachments)
     }
     
     func updateImages(
         to newImages: [WorkAPIModel.Image.Create],
         on database: Database,
-        fileHandler: FileHandler
+        attachmentHandler: AttachmentHandler
     ) -> EventLoopFuture<Void> {
-        $images.get(on: database)
+        $images.query(on: database).with(\.$attachment).all()
             .flatMap { images in
                 var images = images
                 return newImages.enumerated().map { newImageIndex, newImage -> EventLoopFuture<Void> in
@@ -128,9 +114,18 @@ extension Work {
                     return images.flatMap { image -> [EventLoopFuture<Void>] in
                         let deleteFileTask: EventLoopFuture<Void>
                         let deleteModelTask = image.delete(on: database)
-                        let path = try! FilePathBuilder().workImagePath(for: image)
-                        if let imageName = image.name {
-                            deleteFileTask = fileHandler.delete(imageName, at: path)
+                        if let attachmentId = try? image.attachment?.requireID() {
+                            deleteFileTask = Attachment.find(attachmentId, on: database)
+                                .flatMap { attachment in
+                                    guard let attachment = attachment else {
+                                        return database.eventLoop.makeSucceededVoidFuture()
+                                    }
+                                    let promise = database.eventLoop.makePromise(of: Void.self)
+                                    promise.completeWithTask {
+                                        try await attachmentHandler.delete(attachment)
+                                    }
+                                    return promise.futureResult
+                                }
                         } else {
                             deleteFileTask = database.eventLoop.makeSucceededVoidFuture()
                         }
@@ -145,8 +140,8 @@ extension Work {
     func updateImages(
         to newImages: [WorkAPIModel.Image.Create],
         on database: Database,
-        fileHandler: FileHandler
+        attachmentHandler: AttachmentHandler
     ) async throws {
-        try await updateImages(to: newImages, on: database, fileHandler: fileHandler).get()
+        try await updateImages(to: newImages, on: database, attachmentHandler: attachmentHandler).get()
     }
 }

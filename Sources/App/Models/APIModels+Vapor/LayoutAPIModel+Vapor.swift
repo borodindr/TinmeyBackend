@@ -40,7 +40,11 @@ extension LayoutAPIModel.Create {
 
 extension Layout {
     func convertToAPIModel(on database: Database) async throws-> LayoutAPIModel {
-        async let images = $images.query(on: database).sort(\.$sortIndex, .ascending).all()
+        async let images = $images
+            .query(on: database)
+            .sort(\.$sortIndex, .ascending)
+            .with(\.$attachment)
+            .all()
         return try await LayoutAPIModel(
             id: requireID(),
             createdAt: $createdAt.orThrow(),

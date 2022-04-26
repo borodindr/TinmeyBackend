@@ -25,7 +25,6 @@ struct LayoutsController: RouteCollection {
         tokenAuthGroup.put(":layoutID", "move", ":newReversedIndex", use: moveHandler)
         
         let imagesGroup = layoutsRoutes.grouped("images")
-        imagesGroup.get(":imageID", use: downloadImageHandler)
         let tokenAuthImagesGroup = imagesGroup.grouped(tokenAuthMiddleware, guardAuthMiddleware)
         tokenAuthImagesGroup.on(.POST, ":imageID", body: .collect(maxSize: "10mb"), use: addImageHandler)
         tokenAuthImagesGroup.delete(":imageID", use: deleteImageHandler)
@@ -55,7 +54,7 @@ struct LayoutsController: RouteCollection {
             throw Abort(.notFound)
         }
         let sortIndex = layout.sortIndex
-        try await layout.deleteImages(on: req.db, fileHandler: req.fileHandler)
+        try await layout.deleteImages(on: req.db, attachmentHandler: req.attachmentHandler)
         try await layout.delete(on: req.db)
         let layoutsToUpdateQuery = Layout.query(on: req.db).filter(\.$sortIndex > sortIndex)
         let layoutsToUpdate = try await layoutsToUpdateQuery.all()
@@ -76,7 +75,7 @@ struct LayoutsController: RouteCollection {
         layout.title = updatedLayoutData.title
         layout.description = updatedLayoutData.description
         try await layout.save(on: req.db)
-        try await layout.updateImages(to: updatedLayoutData.images, on: req.db, fileHandler: req.fileHandler)
+        try await layout.updateImages(to: updatedLayoutData.images, on: req.db, attachmentHandler: req.attachmentHandler)
         return try await layout.convertToAPIModel(on: req.db)
     }
     
@@ -172,36 +171,26 @@ struct LayoutsController: RouteCollection {
         guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let path = try FilePathBuilder().layoutImagePath(for: image)
-        try await req.fileHandler.upload(data.file.data, named: filename, at: path)
-        image.name = filename
+        let attachment = try await req.attachmentHandler.create(from: data.file.data, named: filename)
+        
+        image.$attachment.id = try attachment.requireID()
         try await image.save(on: req.db)
+        
         return .created
     }
     
     func deleteImageHandler(_ req: Request) async throws -> HTTPStatus {
-        guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
+        guard
+            let imageID: UUID = req.parameters.get("imageID"),
+            let image = try await LayoutImage.find(imageID, on: req.db),
+            let attachment = try await image.$attachment.get(on: req.db)
+        else {
             throw Abort(.notFound)
         }
-        guard let filename = image.name else {
-            throw Abort(.notFound)
-        }
-        let path = try FilePathBuilder().layoutImagePath(for: image)
-        try await req.fileHandler.delete(filename, at: path)
-        image.name = nil
+        
+        try await req.attachmentHandler.delete(attachment)
+        image.$attachment.id = nil
         try await image.save(on: req.db)
         return .noContent
-    }
-    
-    func downloadImageHandler(_ req: Request) async throws -> Response {
-        guard let image = try await LayoutImage.find(req.parameters.get("imageID"), on: req.db) else {
-            throw Abort(.notFound)
-        }
-        guard let filename = image.name else {
-            let reason = "Image '\(image.id?.uuidString ?? "-")' is empty"
-            throw Abort(.notFound, reason: reason)
-        }
-        let path = try FilePathBuilder().layoutImagePath(for: image)
-        return try await req.fileHandler.download(filename, at: path)
     }
 }

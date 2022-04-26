@@ -8,17 +8,9 @@
 </ul>
 <div class="header-greeting">
     <img src="author-photo.jpg" alt="author photo">
-    <h1>Hey it's Katya Tinmey!</h1>
-    <p>I’m a graphic designer born and raised in the Tyva Republic, currently live in Austin, TX. After working four years in automotive business in sales analysis, I enrolled in art school and completed my Master degree in graphic design. Last couple of years I devoted myself to book cover design.</p>
-    <div class="tag-list all">
-            #for(tag in header.availableTags):
-                #if(tag == header.selectedTag):
-                    <a href="?" class="tag selected">
-                #else:
-                    <a href="?tag=#(tag)" class="tag">
-                #endif
-                        #(tag)
-                    </a>
-            #endfor
-        </div>
+    <h1>#(header.title)</h1>
+    <p>#(header.description)</p>
+    #if(header.availableTags):
+        #extend("tagsList")
+    #endif
 </div>

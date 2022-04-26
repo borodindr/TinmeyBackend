@@ -22,7 +22,6 @@ struct AddLocationInProfile: Migration {
 }
 
 extension Profile {
-    
     enum v2021_12_13 {
         static let location = FieldKey(stringLiteral: "location")
     }

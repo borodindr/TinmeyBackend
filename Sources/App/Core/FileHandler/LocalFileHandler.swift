@@ -12,111 +12,97 @@ struct LocalFileHandler: FileHandler {
     
     let fileManager = FileManager.default
     
-    private func path(for fileName: String? = nil, at pathComponents: [String]) -> String {
+    private func path(for filename: String? = nil, at pathComponents: [String]) -> String {
         let workingDirectory = request.application.directory.workingDirectory + "DevelopFiles/"
         let directory = pathComponents.reduce(workingDirectory) { $0 + "\($1)/" }
-        if let fileName = fileName {
-            return directory + fileName
+        if let filename = filename {
+            return directory + filename
         } else {
             return directory
         }
     }
     
     // MARK: - Download
-    func download(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Response> {
-        download(fileName, at: pathComponents)
+    func download(_ filename: String, at pathComponents: String...) async throws -> Response {
+        try await download(filename, at: pathComponents)
     }
     
-    func download(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Response> {
-        let path = path(for: fileName, at: pathComponents)
+    func download(_ filename: String, at pathComponents: [String]) async throws -> Response {
+        let path = path(for: filename, at: pathComponents)
         guard FileManager.default.fileExists(atPath: path) else {
-            return request.eventLoop.future(error: Abort(.notFound))
+            throw Abort(.notFound)
         }
-        let response = request.fileio.streamFile(at: path)
-        return request.eventLoop.future(response)
+        return request.fileio.streamFile(at: path)
     }
     
     // MARK: - Upload
-    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: String...) -> EventLoopFuture<Void> {
-        upload(data, named: fileName, at: pathComponents)
+    func upload(_ data: ByteBuffer, named filename: String, at pathComponents: String...) async throws {
+        try await upload(data, named: filename, at: pathComponents)
     }
     
-    func upload(_ data: ByteBuffer, named fileName: String, at pathComponents: [String]) -> EventLoopFuture<Void> {
-        request.eventLoop.future()
-            .flatMapThrowing {
-                let directoryPath = path(at: pathComponents)
-                if !fileManager.fileExists(atPath: directoryPath) {
-                    try fileManager.createDirectory(atPath: directoryPath, withIntermediateDirectories: true)
-                }
-            }
-            .flatMap {
-                let path = path(for: fileName, at: pathComponents)
-                return request.fileio.writeFile(data, at: path)
-            }
+    func upload(_ data: ByteBuffer, named filename: String, at pathComponents: [String]) async throws {
+        let directoryPath = path(at: pathComponents)
+        if !fileManager.fileExists(atPath: directoryPath) {
+            try fileManager.createDirectory(atPath: directoryPath, withIntermediateDirectories: true)
+        }
+        let path = path(for: filename, at: pathComponents)
+        return try await request.fileio.writeFile(data, at: path)
     }
     
     // MARK: - Delete
-    func delete(_ fileNames: [String], at pathComponents: String...) -> EventLoopFuture<Void> {
-        delete(fileNames, at: pathComponents)
+    func delete(_ filenames: [String], at pathComponents: String...) async throws {
+        try await delete(filenames, at: pathComponents)
     }
     
-    func delete(_ fileNames: [String], at pathComponents: [String]) -> EventLoopFuture<Void> {
-        fileNames
-            .map { delete($0, at: pathComponents) }
-            .flatten(on: request.eventLoop)
+    func delete(_ filenames: [String], at pathComponents: [String]) async throws {
+        for filename in filenames {
+            try await delete(filename, at: pathComponents)
+        }
     }
     
-    func delete(_ fileName: String, at pathComponents: String...) -> EventLoopFuture<Void> {
-        delete(fileName, at: pathComponents)
+    func delete(_ filename: String, at pathComponents: String...) async throws {
+        try await delete(filename, at: pathComponents)
     }
     
-    func delete(_ fileName: String, at pathComponents: [String]) -> EventLoopFuture<Void> {
-        request.eventLoop.future()
-            .flatMapThrowing {
-                let path = path(for: fileName, at: pathComponents)
-                try FileManager.default.removeItem(atPath: path)
+    func delete(_ filename: String, at pathComponents: [String]) async throws {
+        let filePath = path(for: filename, at: pathComponents)
+        try FileManager.default.removeItem(atPath: filePath)
+        var pathComponents = pathComponents
+        while !pathComponents.isEmpty {
+            let directoryPath = path(at: pathComponents)
+            if try fileManager.contentsOfDirectory(atPath: directoryPath).isEmpty {
+                try fileManager.removeItem(atPath: directoryPath)
+                pathComponents.removeLast()
+            } else {
+                return
             }
-            .flatMapThrowing {
-                var pathComponents = pathComponents
-                while !pathComponents.isEmpty {
-                    let directoryPath = path(at: pathComponents)
-                    if try fileManager.contentsOfDirectory(atPath: directoryPath).isEmpty {
-                        try fileManager.removeItem(atPath: directoryPath)
-                        pathComponents.removeLast()
-                    } else {
-                        return
-                    }
-                }
-            }
+        }
     }
     
     // MARK: - Move
-    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: String...) -> EventLoopFuture<Void> {
-        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    func move(_ filename: String, at srcPathComponents: String..., to dstPathComponents: String...) async throws {
+        try await move(filename, at: srcPathComponents, to: dstPathComponents)
     }
     
-    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: String...) -> EventLoopFuture<Void> {
-        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    func move(_ filename: String, at srcPathComponents: [String], to dstPathComponents: String...) async throws {
+        try await move(filename, at: srcPathComponents, to: dstPathComponents)
     }
     
-    func move(_ fileName: String, at srcPathComponents: String..., to dstPathComponents: [String]) -> EventLoopFuture<Void> {
-        move(fileName, at: srcPathComponents, to: dstPathComponents)
+    func move(_ filename: String, at srcPathComponents: String..., to dstPathComponents: [String]) async throws {
+        try await move(filename, at: srcPathComponents, to: dstPathComponents)
     }
     
-    func move(_ fileName: String, at srcPathComponents: [String], to dstPathComponents: [String]) -> EventLoopFuture<Void> {
-        request.eventLoop.future()
-            .flatMapThrowing {
-                let srcPath = path(for: fileName, at: srcPathComponents)
-                let dstPath = path(for: fileName, at: dstPathComponents)
-                let dstDirectoryPath = path(at: dstPathComponents)
-                
-                if !fileManager.fileExists(atPath: dstDirectoryPath) {
-                    try fileManager.createDirectory(atPath: dstDirectoryPath, withIntermediateDirectories: true)
-                }
-                
-                if fileManager.fileExists(atPath: srcPath) {
-                    try fileManager.moveItem(atPath: srcPath, toPath: dstPath)
-                }
-            }
+    func move(_ filename: String, at srcPathComponents: [String], to dstPathComponents: [String]) async throws {
+        let srcPath = path(for: filename, at: srcPathComponents)
+        let dstPath = path(for: filename, at: dstPathComponents)
+        let dstDirectoryPath = path(at: dstPathComponents)
+        
+        if !fileManager.fileExists(atPath: dstDirectoryPath) {
+            try fileManager.createDirectory(atPath: dstDirectoryPath, withIntermediateDirectories: true)
+        }
+        
+        if fileManager.fileExists(atPath: srcPath) {
+            try fileManager.moveItem(atPath: srcPath, toPath: dstPath)
+        }
     }
 }

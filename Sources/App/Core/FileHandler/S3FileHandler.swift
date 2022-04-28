@@ -13,9 +13,11 @@ struct S3FileHandler: FileHandler {
     let bucketName: String
     
     private func objectRequestKey(for filename: String, at pathComponents: [String]) -> String {
-        let location = pathComponents.reduce("upload/") { $0 + "\($1)/" }
-        return location + filename
+        let path = pathComponents.reduce("upload/") { $0 + "\($1)/" } + filename
+        let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+        return encodedPath ?? path
     }
+    
     private var s3: S3 {
         request.aws.s3
     }

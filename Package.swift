@@ -13,7 +13,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "5.0.0"),
-        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
+//        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
         .package(path: "../TinmeyCore")
     ],
     targets: [

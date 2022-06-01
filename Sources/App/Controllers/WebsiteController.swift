@@ -10,19 +10,19 @@ import Fluent
 
 struct WebsiteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        routes.get(use: portfolioHandler)
-        routes.get("portfolio", use: portfolioHandler)
-        routes.get("layouts", use: layoutsHandler)
+        routes.get(use: coversHandler)
+        routes.get("covers", use: coversHandler)
+        routes.get("projects", use: projectsHandler)
     }
     
-    func portfolioHandler(_ req: Request) async throws -> View {
+    func coversHandler(_ req: Request) async throws -> View {
         let tagName = req.query[String.self, at: "tag"]
         let workModels = try await works(req, tagName: tagName)
         async let tags = Tag.query(on: req.db)
             .sort(\.$name, .ascending)
             .all()
         
-        let meta = WebsiteMeta(title: "Portfolio")
+        let meta = WebsiteMeta(title: "COVERS")
         let availableTags = try await tags.map { $0.name }
         let header = TaggedHeader(
             availableTags: availableTags,
@@ -66,8 +66,8 @@ struct WebsiteController: RouteCollection {
         return try await req.view.render("works", context)
     }
     
-    func layoutsHandler(_ req: Request) async throws -> View {
-        let meta = WebsiteMeta(title: "Layouts")
+    func projectsHandler(_ req: Request) async throws -> View {
+        let meta = WebsiteMeta(title: "PROJECTS")
         
         let layoutModels = try await Layout.query(on: req.db)
             .with(\.$images)

@@ -1,15 +1,16 @@
-<ul>
-    <li #if(meta.title == "Portfolio"): class="selected" #endif>
-        <a href="/portfolio">Portfolio</a>
-    </li>
-    <li #if(meta.title == "Layouts"): class="selected" #endif>
-        <a href="/layouts">Layouts</a>
-    </li>
-</ul>
 <div class="header-greeting">
-    <img src="author-photo.jpg" alt="author photo">
-    <h1>#(header.title)</h1>
-    <p>#(header.description)</p>
+    <img class="mobile-hide" src="banner.png" alt="author photo">
+    <img class="mobile-show" src="banner-mobile.png" alt="author photo">
+    
+    <ul>
+        <li #if(meta.title == "COVERS"): class="selected" #endif>
+            <a href="/covers">COVERS</a>
+        </li>
+        <li #if(meta.title == "PROJECTS"): class="selected" #endif>
+            <a href="/projects">PROJECTS</a>
+        </li>
+    </ul>
+    
     #if(header.availableTags):
         #extend("tagsList")
     #endif

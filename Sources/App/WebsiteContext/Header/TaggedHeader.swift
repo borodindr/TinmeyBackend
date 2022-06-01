@@ -8,8 +8,6 @@
 import Foundation
 
 struct TaggedHeader: HeaderProvider {
-    let title = defaultTitle
-    let description = defaultDescription
     let availableTags: [String]
     let selectedTag: String?
     

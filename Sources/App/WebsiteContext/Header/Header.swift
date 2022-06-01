@@ -7,7 +7,4 @@
 
 import Foundation
 
-struct Header: HeaderProvider {
-    let title = defaultTitle
-    let description = defaultDescription
-}
+struct Header: HeaderProvider { }

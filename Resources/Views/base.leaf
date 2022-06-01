@@ -63,11 +63,11 @@
                         <img src="icon-instagram.svg" alt="instagram icon">
                     </a>
                 </div>
-                <div class="contact">
+                <!-- <div class="contact">
                     <a href="https://www.behance.net/katyatinmey" target="_blank">
                         <img src="icon-behance.svg" alt="behance icon">
                     </a>
-                </div>
+                </div> -->
             </div>
         </nav>
 
